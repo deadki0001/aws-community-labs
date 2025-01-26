@@ -16,9 +16,15 @@ main = Blueprint('main', __name__)
 def index():
     if 'user_id' in session:
         user = User.query.get(session['user_id'])
-        challenges = Challenge.query.all()
-        return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
+        if user:  # Ensure user exists in the database
+            challenges = Challenge.query.all()
+            return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
+        else:
+            # If the user ID is invalid, clear the session and redirect to signup
+            session.pop('user_id', None)
+            return redirect(url_for('main.signup'))
     return redirect(url_for('main.signup'))
+
 
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])
@@ -268,17 +274,61 @@ def validate_command():
 
         if current_challenge:
             # Match command based only on the stored solution prefix, ignoring additional arguments
+            if current_challenge.name == 'Create an IAM User':
+                # Check if the command starts correctly and contains a username
+                if command.lower().startswith('aws iam create-user --user-name'):
+                    parts = command.split()
+                    if len(parts) > 4:  # Ensure a username is provided
+                        # Check if the user has already completed this challenge
+                        existing_score = Score.query.filter_by(
+                            user_id=user_id, 
+                            challenge_id=current_challenge.id
+                        ).first()
+
+                        if not existing_score:
+                            # Add a new score record if the challenge is completed for the first time
+                            score = Score(
+                                user_id=user_id,
+                                challenge_id=current_challenge.id,
+                                score=10,
+                                completed_at=datetime.now()
+                            )
+                            db.session.add(score)
+                            db.session.commit()
+
+                            # Check total user score for Cloud Warrior badge
+                            total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
+                            print(f"Total score for user {user_id}: {total_score}")
+
+                            cloud_warrior_achieved = total_score >= 10 and total_score < 20
+                            if cloud_warrior_achieved:
+                                print("Cloud Warrior badge conditions met")
+                                user = User.query.get(user_id)
+                                result = send_cloud_warrior_badge(user)
+                                print(f"Badge email send result: {result}")
+
+                            return jsonify({
+                                "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!", 
+                                "total_score": total_score,
+                                "cloud_warrior": cloud_warrior_achieved
+                            })
+                        else:
+                            return jsonify({"message": "\nYou've already completed this challenge."})
+                    else:
+                        return jsonify({
+                            "message": "⚠️ Your command is incomplete. Provide a username after --user-name. For example: aws iam create-user --user-name myNewUser"
+                        }), 200
+
+            # General validation for other challenges
             is_valid_command = command.lower().startswith(current_challenge.solution.strip().lower())
 
             if is_valid_command:
-                # Check if the user has already completed this challenge
                 existing_score = Score.query.filter_by(
                     user_id=user_id, 
                     challenge_id=current_challenge.id
                 ).first()
 
                 if not existing_score:
-                    # Add a new score record if the challenge is completed for the first time
                     score = Score(
                         user_id=user_id,
                         challenge_id=current_challenge.id,
@@ -291,13 +341,20 @@ def validate_command():
                     # Check total user score for Cloud Warrior badge
                     total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
                     print(f"Total score for user {user_id}: {total_score}")
-
+                    # Check for badges
                     cloud_warrior_achieved = total_score >= 10 and total_score < 20
+                    cloud_sorcerer_achieved = total_score >= 50
                     if cloud_warrior_achieved:
                         print("Cloud Warrior badge conditions met")
                         user = User.query.get(user_id)
                         result = send_cloud_warrior_badge(user)
                         print(f"Badge email send result: {result}")
+                    cloud_sorcerer_achieved = total_score >= 50
+                    if cloud_sorcerer_achieved:
+                        print("Cloud Sorcerer badge conditions met")
+                        user = User.query.get(user_id)  # Ensure user is retrieved before calling the function
+                        result = send_cloud_sorcerer_badge(user)
+                        print(f"Badge email send result: {result}")                     
 
                     return jsonify({
                         "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!", 
@@ -306,7 +363,7 @@ def validate_command():
                     })
                 else:
                     return jsonify({"message": "\nYou've already completed this challenge."})
-            
+
             # Links for incorrect responses
             links = {
                 'Create a VPC': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html",
@@ -342,9 +399,8 @@ def validate_command():
     except Exception as e:
         print(f"Error validating command: {e}")
         return jsonify({"message": f"❌ An error occurred: {str(e)}"}), 500
+
     
-
-
 def send_cloud_warrior_badge(user):
     """
     Send Cloud Warrior badge email
@@ -399,8 +455,69 @@ def send_cloud_warrior_badge(user):
 
     try:
         mail.send(msg)
+        print(f"Cloud Sorcerer Badge email sent to {user.email}")
+        return True
+    except Exception as e:
+        print(f"Error sending Cloud Sorcerer badge email: {e}")
+        return False        
+
+def send_cloud_sorcerer_badge(user):
+    """
+    Send Cloud Sorcerer badge email
+    """
+    signature = """
+    <div style="font-family: Arial, sans-serif; font-size: 12px; color: #666; 
+                border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 20px;">
+        <p>Best regards,<br>
+        Devon Adkins<br>
+        <strong>AWS CLI Learning Platform</strong><br>
+        <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
+        📧 devon@deadkithedeveloper.click</p>
+    </div>
+    """
+    
+    # Prepare email
+    msg = Message(
+        subject="🌟 Congratulations! You've Unlocked the Cloud Sorcerer Badge!",
+        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
+        recipients=[user.email]
+    )
+    
+    # Text body
+    msg.body = f"""
+    Congratulations, {user.username}! 🎉
+
+    You've just earned the legendary Cloud Sorcerer Badge! 🌟
+
+    By mastering every AWS CLI challenge and demonstrating unparalleled expertise, 
+    you've ascended to the pinnacle of cloud proficiency.
+
+    We are thrilled to have you as part of our elite community of cloud enthusiasts!
+
+    Best regards,
+    AWS CLI Learning Platform Team
+    """
+    
+    # HTML body with signature and badge
+    msg.html = f"""
+    <div style="text-align: center; font-family: Arial, sans-serif;">
+        <h1>🌟 Cloud Sorcerer Badge Unlocked! 🌟</h1>
+        <p>Congratulations, {user.username}!</p>
+        <p>You've reached the summit of AWS CLI mastery and earned the legendary Cloud Sorcerer Badge!</p>
+        <img src="cid:cloud_sorcerer_badge" alt="Cloud Sorcerer Badge" style="max-width: 300px;">
+    </div>
+    """ + signature
+
+    # Attach badge image
+    badge_path = os.path.join(os.path.dirname(__file__), 'static', 'magic.png')
+    with open(badge_path, 'rb') as f:
+        msg.attach("cloud_sorcerer_badge", "image/png", f.read(), "magic.png")
+
+    try:
+        mail.send(msg)
         print(f"Cloud Warrior Badge email sent to {user.email}")
         return True
     except Exception as e:
         print(f"Error sending Cloud Warrior badge email: {e}")
         return False
+    

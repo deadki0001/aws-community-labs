@@ -4,11 +4,38 @@ const term = new Terminal({
     theme: {
         background: '#000000', // Black background
         foreground: '#FFFFFF' // White text
-    }
+    },
+    rightClickSelectsWord: true, // Enable word selection on right-click
+    allowProposedApi: true, // Allow advanced API usage (optional)    
 });
 
 // Attach the terminal to the container
 term.open(document.getElementById('terminal-container'));
+
+// Allow text selection and copying
+term.attachCustomKeyEventHandler((e) => {
+    // Allow default browser behavior for copying (Ctrl+C / Cmd+C)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        return true; // Let the browser handle copying
+    }
+    return true; // Allow all other key events to pass through
+});
+
+term.element.addEventListener('mouseup', () => {
+    if (window.getSelection().toString()) {
+        // Disable focus shift if text is selected
+        term.blur();
+    }
+});
+
+term.element.addEventListener('mousedown', (event) => {
+    // Allow default text selection behavior for single and double clicks
+    if (event.detail >= 2) {
+        // Let double-click for word selection work as usual
+        return;
+    }
+    term.focus(); // Keep the focus on the terminal for single clicks
+});
 
 // Function to convert URLs to hyperlinks
 function convertUrlsToLinks(text) {
@@ -128,3 +155,14 @@ term.clear = function () {
     term.write('\x1b[2J\x1b[H'); // Clear the visible terminal screen
     term.write('$ '); // Display the prompt
 };
+
+// Event listener to disable mouse events when selecting text
+term.element.addEventListener('mousedown', (event) => {
+    if (event.detail >= 2) { // Double click
+        event.preventDefault();
+        term.selectWord(); // Allow word selection
+    }
+});
+
+// Allow mouse to focus for text selection
+term.focus();

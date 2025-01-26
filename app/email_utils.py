@@ -64,6 +64,10 @@ class EmailService:
                 password=password
             ) + signature
             
+            aws_learning = os.path.join(os.path.dirname(__file__), 'static', 'aws.png')
+            with open(aws_learning, 'rb') as f:
+                msg.attach("cloudlearning", "image/png", f.read(), "aws.png")    
+
             try:
                 mail.send(msg)
                 print(f"Welcome email sent to {user.email}")
