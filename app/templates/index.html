@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS CLI Learning Platform</title>
+</head>
+<body>
+    <h1>{{ message }}</h1>
+
+    <h2>Challenges</h2>
+    <ul>
+        {% for challenge in challenges %}
+        <li>
+            <h3>{{ challenge.name }}</h3>
+            <p>{{ challenge.description }}</p>
+            <form action="{{ url_for('main.validate_command') }}" method="POST">
+                <input type="text" name="command" placeholder="Enter your AWS CLI command" required>
+                <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                <button type="submit">Validate Command</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('main.logout') }}">Logout</a>
+</body>
+</html>
