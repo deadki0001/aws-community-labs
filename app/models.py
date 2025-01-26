@@ -51,17 +51,17 @@ def initialize_challenges():
         Challenge(
             name='Create a VPC',
             description='Use the AWS CLI to create a new VPC.',
-            solution='aws ec2 create-vpc --cidr-block 10.0.0.0/16'
+            solution='aws ec2 create-vpc' #--cidr-block 10.0.0.0/16 --tag-specifications ResourceType=vpc,Tags=[{Key=Name,Value=MyVPC}]'
         ) if 'Create a VPC' not in existing_challenges else None,
         Challenge(
             name='Create an RDS Instance',
             description='Use the AWS CLI to create an RDS instance.',
-            solution='aws rds create-db-instance --db-instance-identifier <identifier> --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password'
+            solution='aws rds create-db-instance' #--db-instance-identifier mydbinstance --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password123'
         ) if 'Create an RDS Instance' not in existing_challenges else None,
         Challenge(
             name='Create a Security Group',
             description='Use the AWS CLI to create a security group.',
-            solution='aws ec2 create-security-group --group-name <group-name> --description "Security group for demo purposes"'
+            solution='aws ec2 create-security-group' #--group-name MySecurityGroup --description "Security group for demo purposes" --vpc-id vpc-12345678'
         ) if 'Create a Security Group' not in existing_challenges else None,
         Challenge(
             name='Create an IAM User',
@@ -76,7 +76,7 @@ def initialize_challenges():
         Challenge(
             name='Create an S3 Bucket',
             description='Use the AWS CLI to Create an S3 Bucket.',
-            solution='aws s3api create-bucket'
+            solution='aws s3 mb'
         ) if 'Create an S3 Bucket' not in existing_challenges else None                    
     ]
     
