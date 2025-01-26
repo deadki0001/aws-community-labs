@@ -4,12 +4,6 @@ const term = new Terminal({
     theme: {
         background: '#000000', // Black background
         foreground: '#FFFFFF' // White text
-    },
-    // Enable link handling
-    linkHandler: {
-        activate: (event, uri) => {
-            window.open(uri, '_blank');
-        }
     }
 });
 
@@ -20,7 +14,6 @@ term.open(document.getElementById('terminal-container'));
 function convertUrlsToLinks(text) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlRegex, (url) => {
-        // Create a hyperlink that can be clicked
         return `\x1b]8;;${url}\x1b\\${url}\x1b]8;;\x1b\\`;
     });
 }
@@ -28,7 +21,7 @@ function convertUrlsToLinks(text) {
 // Initialize terminal with a clean state
 function initializeTerminal() {
     term.reset(); // Clear and reset terminal state
-    term.write('\x1b[2J\x1b[3J\x1b[H\x1b[?25l'); // Clear screen, scrollback, and hide cursor
+    term.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to top-left
     term.write('$ '); // Display the prompt
 }
 
@@ -37,6 +30,8 @@ initializeTerminal();
 
 // Global variables
 let inputBuffer = ''; // Store user input
+let commandHistory = []; // Store the command history
+let historyIndex = -1; // Track the position in the history
 let activeChallengeId = null; // Track the current active challenge
 
 // Function to start a challenge
@@ -52,8 +47,16 @@ window.startChallenge = function (challengeId) {
 // Terminal input handling
 term.onData((data) => {
     if (data === '\r') { // Enter key pressed
+        if (inputBuffer.trim() === 'clear') {
+            term.clear();
+            inputBuffer = ''; // Clear the input buffer
+            return;
+        }
+
         if (activeChallengeId) {
             console.log(`Command submitted: ${inputBuffer.trim()}, Challenge ID: ${activeChallengeId}`);
+            commandHistory.push(inputBuffer.trim()); // Save the command in history
+            historyIndex = -1; // Reset history index
 
             // Send the user command to the server for validation
             fetch('/validate', {
@@ -74,7 +77,6 @@ term.onData((data) => {
                 })
                 .then((data) => {
                     console.log('Response from /validate:', data);
-                    // Convert URLs to hyperlinks and display the response
                     const formattedMessage = convertUrlsToLinks(data.message);
                     term.write(formattedMessage.replace(/\n/g, '\r\n') + '\r\n$ ');
                 })
@@ -92,6 +94,28 @@ term.onData((data) => {
             inputBuffer = inputBuffer.slice(0, -1);
             term.write('\b \b'); // Remove the last character from the terminal display
         }
+    } else if (data === '\u001b[A') { // Up arrow key pressed
+        if (commandHistory.length > 0) {
+            if (historyIndex === -1) {
+                historyIndex = commandHistory.length; // Start from the latest command
+            }
+            if (historyIndex > 0) {
+                historyIndex--;
+                inputBuffer = commandHistory[historyIndex];
+                term.write('\r\x1b[K$ ' + inputBuffer); // Clear the current line and display the command
+            }
+        }
+    } else if (data === '\u001b[B') { // Down arrow key pressed
+        if (historyIndex !== -1) {
+            historyIndex++;
+            if (historyIndex < commandHistory.length) {
+                inputBuffer = commandHistory[historyIndex];
+            } else {
+                inputBuffer = '';
+                historyIndex = -1; // Reset index if we go past the last command
+            }
+            term.write('\r\x1b[K$ ' + inputBuffer); // Clear the current line and display the command
+        }
     } else {
         inputBuffer += data; // Add typed data to the input buffer
         term.write(data); // Display the typed character in the terminal
@@ -101,7 +125,6 @@ term.onData((data) => {
 // Helper to clear and reset the terminal
 term.clear = function () {
     term.reset(); // Reset the terminal's internal state
-    term.write('\x1b[2J'); // Clear the visible terminal screen
-    term.write('\x1b[H');  // Move the cursor to the top-left
-    term.write('$ ');      // Display the prompt
+    term.write('\x1b[2J\x1b[H'); // Clear the visible terminal screen
+    term.write('$ '); // Display the prompt
 };

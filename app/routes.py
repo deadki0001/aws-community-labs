@@ -267,11 +267,8 @@ def validate_command():
         current_challenge = Challenge.query.get(challenge_id)
 
         if current_challenge:
-            # More flexible matching for commands with parameters
-            is_valid_command = (
-                command.lower().startswith(current_challenge.solution.strip().lower()) or 
-                command.lower() == current_challenge.solution.strip().lower()
-            )
+            # Match command based only on the stored solution prefix, ignoring additional arguments
+            is_valid_command = command.lower().startswith(current_challenge.solution.strip().lower())
 
             if is_valid_command:
                 # Check if the user has already completed this challenge
@@ -281,6 +278,7 @@ def validate_command():
                 ).first()
 
                 if not existing_score:
+                    # Add a new score record if the challenge is completed for the first time
                     score = Score(
                         user_id=user_id,
                         challenge_id=current_challenge.id,
