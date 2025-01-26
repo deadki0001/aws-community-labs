@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard | AWS CLI Learning Platform</title>
     <style>
-        /* General Styles */
+        /* Your existing styles remain unchanged */
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -91,11 +91,11 @@
                 </tr>
             </thead>
             <tbody>
-                {% for i, score in enumerate(scores) %}
+                {% for rank, (username, total_score) in leaderboard %}
                 <tr>
-                    <td>{{ i + 1 }}</td>
-                    <td>{{ score[0] }}</td>
-                    <td>{{ score[1] }}</td>
+                    <td>{{ rank }}</td>
+                    <td>{{ username }}</td>
+                    <td>{{ total_score }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

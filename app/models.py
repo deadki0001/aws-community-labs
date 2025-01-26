@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from app import db  # Import `db` directly from `app` to avoid creating a new instance
+from sqlalchemy import func
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -8,7 +9,6 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     
-    # New columns for password reset
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
 
@@ -38,20 +38,52 @@ class Score(db.Model):
     score = db.Column(db.Integer, default=0)
     completed_at = db.Column(db.DateTime, server_default=db.func.now())
 
+    # Add explicit relationship with backref to access username
     user = db.relationship('User', backref=db.backref('scores', lazy=True))
     challenge = db.relationship('Challenge', backref=db.backref('scores', lazy=True))
 
     def __repr__(self):
         return f'<Score User:{self.user_id}, Challenge:{self.challenge_id}, Score:{self.score}>'
 
-# Initialize challenges if needed
 def initialize_challenges():
-    # This function assumes the app context is already active
-    if Challenge.query.count() == 0:
-        initial_challenges = [
-            Challenge(name='Launch an EC2 instance', description='Use the AWS CLI to launch an EC2 instance.', solution='aws ec2 run-instances'),
-            Challenge(name='List S3 buckets', description='List all S3 buckets in your account.', solution='aws s3 ls'),
-        ]
+    existing_challenges = {challenge.name for challenge in Challenge.query.all()}
+    initial_challenges = [
+        Challenge(
+            name='Create a VPC',
+            description='Use the AWS CLI to create a new VPC.',
+            solution='aws ec2 create-vpc --cidr-block 10.0.0.0/16'
+        ) if 'Create a VPC' not in existing_challenges else None,
+        Challenge(
+            name='Create an RDS Instance',
+            description='Use the AWS CLI to create an RDS instance.',
+            solution='aws rds create-db-instance --db-instance-identifier <identifier> --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password'
+        ) if 'Create an RDS Instance' not in existing_challenges else None,
+        Challenge(
+            name='Create a Security Group',
+            description='Use the AWS CLI to create a security group.',
+            solution='aws ec2 create-security-group --group-name <group-name> --description "Security group for demo purposes"'
+        ) if 'Create a Security Group' not in existing_challenges else None,
+        Challenge(
+            name='Create an IAM User',
+            description='Use the AWS CLI to create a new IAM user.',
+            solution='aws iam create-user --user-name'
+        ) if 'Create an IAM User' not in existing_challenges else None,
+        Challenge(
+            name='Launch an EC2 instance',
+            description='Use the AWS CLI to launch an EC2 instance.',
+            solution='aws ec2 run-instances'
+        ) if 'Launch an EC2 instance' not in existing_challenges else None,
+        Challenge(
+            name='Create an S3 Bucket',
+            description='Use the AWS CLI to Create an S3 Bucket.',
+            solution='aws s3api create-bucket'
+        ) if 'Create an S3 Bucket' not in existing_challenges else None                    
+    ]
+    
+    # Filter out None values (already existing challenges)
+    initial_challenges = [challenge for challenge in initial_challenges if challenge]
+    
+    if initial_challenges:
         db.session.add_all(initial_challenges)
         db.session.commit()
-        print("Initialized database with challenges.")
+        print("Updated challenges in the database.")

@@ -1,11 +1,13 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from app.models import User, Challenge, Score
 from app import db
+import os
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
 from flask_mail import Message
 from app import mail
+from sqlalchemy import func
 
 main = Blueprint('main', __name__)
 
@@ -13,8 +15,9 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' in session:
+        user = User.query.get(session['user_id'])
         challenges = Challenge.query.all()
-        return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!")
+        return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
     return redirect(url_for('main.signup'))
 
 # Route for the sign-up page
@@ -50,6 +53,75 @@ def signup():
                                    message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
+
+# Leaderboard Route
+@main.route('/leaderboard')
+def leaderboard():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    # Get total scores per user, ordered by total score descending
+    leaderboard_data = db.session.query(
+        User.username, 
+        func.sum(Score.score).label('total_score')
+    ).join(Score, User.id == Score.user_id)\
+     .group_by(User.username)\
+     .order_by(func.sum(Score.score).desc())\
+     .limit(10)\
+     .all()
+
+    # Convert to list with enumeration
+    leaderboard_with_rank = list(enumerate(leaderboard_data, 1))
+
+    return render_template('leaderboard.html', leaderboard=leaderboard_with_rank)
+
+
+@main.route('/user_info')
+def user_info():
+    if 'user_id' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    user = User.query.get(session['user_id'])
+    total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user.id).scalar() or 0
+    
+    return jsonify({
+        "username": user.username,
+        "total_score": total_score
+    })
+
+# Update the initialization function to track any potential duplicates
+def initialize_challenges():
+    existing_challenges = {challenge.name for challenge in Challenge.query.all()}
+    initial_challenges = [
+        Challenge(
+            name='Create a VPC',
+            description='Use the AWS CLI to create a new VPC.',
+            solution='aws ec2 create-vpc --cidr-block 10.0.0.0/16'
+        ) if 'Create a VPC' not in existing_challenges else None,
+        Challenge(
+            name='Create an RDS Instance',
+            description='Use the AWS CLI to create an RDS instance.',
+            solution='aws rds create-db-instance --db-instance-identifier <identifier> --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password'
+        ) if 'Create an RDS Instance' not in existing_challenges else None,
+        Challenge(
+            name='Create a Security Group',
+            description='Use the AWS CLI to create a security group.',
+            solution='aws ec2 create-security-group --group-name <group-name> --description "Security group for demo purposes"'
+        ) if 'Create a Security Group' not in existing_challenges else None,
+        Challenge(
+            name='Create an IAM User',
+            description='Use the AWS CLI to create a new IAM user.',
+            solution='aws iam create-user --user-name <user-name>'
+        ) if 'Create an IAM User' not in existing_challenges else None,
+    ]
+    
+    # Filter out None values (already existing challenges)
+    initial_challenges = [challenge for challenge in initial_challenges if challenge]
+    
+    if initial_challenges:
+        db.session.add_all(initial_challenges)
+        db.session.commit()
+        print("Updated challenges in the database.")
 
 # Forgot password
 @main.route('/forgot-password', methods=['GET', 'POST'])
@@ -195,52 +267,142 @@ def validate_command():
         current_challenge = Challenge.query.get(challenge_id)
 
         if current_challenge:
-            if command.lower() == current_challenge.solution.strip().lower():
-                score = Score(
-                    user_id=user_id,
-                    challenge_id=current_challenge.id,
-                    score=10,
-                    completed_at=datetime.now()
-                )
-                db.session.add(score)
-                db.session.commit()
-
-                return jsonify({"message": f"✅ Correct! Challenge '{current_challenge.name}' completed!"})
-            
-            message = (
-                "❌ Incorrect command for challenge: 'Launch an EC2 instance'\n"
-                "Please refer to the AWS documentation here:\n"
-                "📖 AWS CLI Guide: https://docs.aws.amazon.com/cli/v1/userguide/cli-services-ec2-instances.html\n"
-                "Additionally, you can watch this video for a demo:\n"
-                "🎥 YouTube - Stephen Maarek: https://www.youtube.com/watch?v=crNyDkR3ulU"
+            # More flexible matching for commands with parameters
+            is_valid_command = (
+                command.lower().startswith(current_challenge.solution.strip().lower()) or 
+                command.lower() == current_challenge.solution.strip().lower()
             )
-            return jsonify({"message": message})
 
-        print(f"Challenge with ID {challenge_id} not found.")
-        return jsonify({"message": "❌ Challenge not found."})
+            if is_valid_command:
+                # Check if the user has already completed this challenge
+                existing_score = Score.query.filter_by(
+                    user_id=user_id, 
+                    challenge_id=current_challenge.id
+                ).first()
+
+                if not existing_score:
+                    score = Score(
+                        user_id=user_id,
+                        challenge_id=current_challenge.id,
+                        score=10,
+                        completed_at=datetime.now()
+                    )
+                    db.session.add(score)
+                    db.session.commit()
+
+                    # Check total user score for Cloud Warrior badge
+                    total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
+                    print(f"Total score for user {user_id}: {total_score}")
+
+                    cloud_warrior_achieved = total_score >= 10 and total_score < 20
+                    if cloud_warrior_achieved:
+                        print("Cloud Warrior badge conditions met")
+                        user = User.query.get(user_id)
+                        result = send_cloud_warrior_badge(user)
+                        print(f"Badge email send result: {result}")
+
+                    return jsonify({
+                        "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!", 
+                        "total_score": total_score,
+                        "cloud_warrior": cloud_warrior_achieved
+                    })
+                else:
+                    return jsonify({"message": "\nYou've already completed this challenge."})
+            
+            # Links for incorrect responses
+            links = {
+                'Create a VPC': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html",
+                'Create an S3 Bucket': "https://docs.aws.amazon.com/cli/latest/reference/s3api/create-bucket.html",                
+                'Create an RDS Instance': "https://docs.aws.amazon.com/cli/latest/reference/rds/create-db-instance.html",
+                'Create a Security Group': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-security-group.html",
+                'Create an IAM User': "https://docs.aws.amazon.com/cli/latest/reference/iam/create-user.html",
+                'Launch an EC2 instance': "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html",
+                'AWS CLI Guide': "https://docs.aws.amazon.com/cli/v1/userguide/cli-services-ec2-instances.html"
+            }
+
+            videos = {
+                'Create a VPC': "https://www.youtube.com/watch?v=ctwO-CMGkxg",
+                'Create an S3 Bucket': "https://www.youtube.com/watch?v=RODg8GWKU2Q",                
+                'Create an RDS Instance': "https://www.youtube.com/watch?v=QtouOs4tzNk",
+                'Create a Security Group': "https://www.youtube.com/watch?v=XXXXX",
+                'Create an IAM User': "https://www.youtube.com/watch?v=ZQMpSICUEcw",
+                'Launch an EC2 instance': "https://www.youtube.com/watch?v=crNyDkR3ulU",
+                'Stephen Maarek': "https://www.youtube.com/watch?v=crNyDkR3ulU"
+            }
+
+            incorrect_message = (
+                f"❌ Incorrect command for challenge: '{current_challenge.name}'\n"
+                f"Please refer to the AWS documentation here:\n"
+                f"📖 AWS CLI Guide: {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}\n"
+                f"🎥 Video Tutorial: {videos.get(current_challenge.name, 'https://www.youtube.com')}"
+            )
+
+            return jsonify({"message": incorrect_message}), 200
+
+        return jsonify({"message": "❌ Challenge not found."}), 404
+
     except Exception as e:
-        print(f"Error processing validation: {e}")
+        print(f"Error validating command: {e}")
         return jsonify({"message": f"❌ An error occurred: {str(e)}"}), 500
+    
 
-# Route for fetching user info
-@main.route('/user_info')
-def user_info():
-    if 'user_id' in session:
-        user_id = session['user_id']
-        user = User.query.get(user_id)
-        total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
 
-        return jsonify({
-            "username": user.username,
-            "total_score": total_score
-        })
-    return jsonify({"message": "User not logged in"}), 401
+def send_cloud_warrior_badge(user):
+    """
+    Send Cloud Warrior badge email
+    """
+    signature = """
+    <div style="font-family: Arial, sans-serif; font-size: 12px; color: #666; 
+                border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 20px;">
+        <p>Best regards,<br>
+        Devon Adkins<br>
+        <strong>AWS CLI Learning Platform</strong><br>
+        <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
+        📧 devon@deadkithedeveloper.click</p>
+    </div>
+    """
+    
+    # Prepare email
+    msg = Message(
+        subject="🏆 Congratulations! You've Unlocked the Cloud Warrior Badge!",
+        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
+        recipients=[user.email]
+    )
+    
+    # Text body
+    msg.body = f"""
+    Congratulations, {user.username}! 🎉
 
-# Route for the leaderboard
-@main.route('/leaderboard')
-def leaderboard():
-    scores = User.query.join(Score)\
-        .with_entities(User.username, db.func.sum(Score.score).label('total_score'))\
-        .group_by(User.id).order_by(db.func.sum(Score.score).desc()).all()
+    You've just earned the prestigious Cloud Warrior Badge! 🛡️
 
-    return render_template('leaderboard.html', scores=scores, enumerate=enumerate)
+    By completing AWS CLI challenges and accumulating 10 points, 
+    you've proven your skills and dedication to cloud technology.
+
+    Keep learning, keep growing!
+
+    Best regards,
+    AWS CLI Learning Platform Team
+    """
+    
+    # HTML body with signature and badge
+    msg.html = f"""
+    <div style="text-align: center; font-family: Arial, sans-serif;">
+        <h1>🏆 Cloud Warrior Badge Unlocked! 🏆</h1>
+        <p>Congratulations, {user.username}!</p>
+        <p>You've earned the prestigious Cloud Warrior Badge by mastering AWS CLI challenges!</p>
+        <img src="cid:cloud_warrior_badge" alt="Cloud Warrior Badge" style="max-width: 300px;">
+    </div>
+    """ + signature
+
+    # Attach badge image
+    badge_path = os.path.join(os.path.dirname(__file__), 'static', 'badge.png')
+    with open(badge_path, 'rb') as f:
+        msg.attach("cloud_warrior_badge", "image/png", f.read(), "Cloud_Warrior_Badge.png")
+
+    try:
+        mail.send(msg)
+        print(f"Cloud Warrior Badge email sent to {user.email}")
+        return True
+    except Exception as e:
+        print(f"Error sending Cloud Warrior badge email: {e}")
+        return False
