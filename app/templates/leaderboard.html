@@ -3,13 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Leaderboard | AWS CLI Learning Platform</title>
     <style>
+        /* General Styles */
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #1a73e8, #ff6f00);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
             padding: 20px;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
         }
         table {
             width: 100%;
@@ -17,36 +39,68 @@
             margin-top: 20px;
         }
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px;
             text-align: left;
+            color: #fff;
         }
         th {
-            background-color: #007bff;
-            color: white;
+            background-color: rgba(255,255,255,0.1);
+            font-weight: bold;
+        }
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+            transition: color 0.3s;
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: #ff6f00;
+            border-radius: 10px;
+            color: #fff;
+        }
+        a:hover {
+            background: #e65c00;
+        }
+        .background-animation {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent 70%);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <h1>Leaderboard</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Username</th>
-                <th>Total Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for i, score in enumerate(scores) %}
-            <tr>
-                <td>{{ i + 1 }}</td>
-                <td>{{ score[0] }}</td>
-                <td>{{ score[1] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{{ url_for('main.index') }}">Back to Home</a>
+    <div class="background-animation"></div>
+    <div class="container">
+        <h1>Leaderboard</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i, score in enumerate(scores) %}
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ score[0] }}</td>
+                    <td>{{ score[1] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{{ url_for('main.index') }}">Back to Home</a>
+    </div>
 </body>
 </html>

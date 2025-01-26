@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from app import db  # Import `db` directly from `app` to avoid creating a new instance
 
 class User(db.Model):
@@ -6,9 +7,20 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    
+    # New columns for password reset
+    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+    def set_reset_token(self, token):
+        self.reset_token = token
+        self.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
+
+    def is_reset_token_valid(self):
+        return self.reset_token_expiration and datetime.utcnow() < self.reset_token_expiration
 
 class Challenge(db.Model):
     id = db.Column(db.Integer, primary_key=True)

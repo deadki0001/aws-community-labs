@@ -3,18 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Sign Up | AWS CLI Learning Platform</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #1a73e8, #ff6f00);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            width: 350px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        header p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: #333;
+        }
+        .input-group input:focus {
+            outline: none;
+            box-shadow: 0 0 10px #ff6f00;
+        }
+        .signup-button {
+            background: #ff6f00;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            padding: 0.75rem;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .signup-button:hover {
+            background: #e65c00;
+        }
+        .login-link {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .login-link a {
+            color: #1a73e8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .login-link a:hover {
+            color: #0f59d1;
+        }
+        .message {
+            color: #ff6f00;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        .forgot-password-link {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .forgot-password {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .forgot-password:hover {
+            color: #0f59d1;
+            text-decoration: underline;
+        }        
+        /* Background Animation */
+        .background-animation {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Sign Up</h1>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Sign Up</button>
-    </form>
-    <p>{{ message }}</p>
-    <a href="{{ url_for('main.login') }}">Already have an account? Log in here.</a>
+    <div class="background-animation"></div>
+    <div class="container">
+        <header>
+            <h1>Welcome to the AWS CLI Learning Platform</h1>
+            <p>Embark on Your Cloud Command Line Adventure</p>
+        </header>
+        <main>
+            <form method="POST" class="signup-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="signup-button">Sign Up</button>
+            </form>
+            
+            {% if message %}
+            <p class="message">{{ message }}</p>
+            {% endif %}
+            
+            <div class="forgot-password-link">
+                <a href="{{ url_for('main.forgot_password') }}" class="forgot-password" style="font-size: 0.8rem;">Forgot Password?</a>
+            </div>
+            
+            <p class="login-link">Already have an account? <a href="{{ url_for('main.login') }}">Log in here.</a></p>          
+        </main>
+    </div>
 </body>
 </html>
-
