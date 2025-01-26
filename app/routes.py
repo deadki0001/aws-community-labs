@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, current_app
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from app.models import User, Challenge, Score
 from app import db
 from datetime import datetime
@@ -61,11 +61,10 @@ def validate_command():
 
     try:
         user_id = session['user_id']
+        user = User.query.get(user_id)
         data = request.get_json()
         command = data.get('command', '').strip()
         challenge_id = int(data.get('challenge_id', 0))
-
-        print(f"Validating command for User ID: {user_id}, Challenge ID: {challenge_id}, Command: {command}")
 
         current_challenge = Challenge.query.get(challenge_id)
 
@@ -80,29 +79,39 @@ def validate_command():
                 db.session.add(score)
                 db.session.commit()
 
-                return jsonify({"message": f"✅ Correct! Challenge '{current_challenge.name}' completed!"})
-            
-            message = (
-                "❌ Incorrect command for challenge: 'Launch an EC2 instance'\n"
-                "Please refer to the AWS documentation here:\n"
-                "📖 AWS CLI Guide: https://docs.aws.amazon.com/cli/v1/userguide/cli-services-ec2-instances.html\n"
-                "Additionally, you can watch this video for a demo:\n"
-                "🎥 YouTube - Stephen Maarek: https://www.youtube.com/watch?v=crNyDkR3ulU"
-            )
-            return jsonify({"message": message})
+                total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
 
-        print(f"Challenge with ID {challenge_id} not found.")
+                return jsonify({
+                    "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!",
+                    "username": user.username,
+                    "total_score": total_score
+                })
+
+            return jsonify({"message": "❌ Incorrect command. Please try again."})
+
         return jsonify({"message": "❌ Challenge not found."})
     except Exception as e:
-        print(f"Error processing validation: {e}")
         return jsonify({"message": f"❌ An error occurred: {str(e)}"}), 500
 
-# Route to display the leaderboard
+# Route for fetching user info
+@main.route('/user_info')
+def user_info():
+    if 'user_id' in session:
+        user_id = session['user_id']
+        user = User.query.get(user_id)
+        total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
+
+        return jsonify({
+            "username": user.username,
+            "total_score": total_score
+        })
+    return jsonify({"message": "User not logged in"}), 401
+
+# Route for the leaderboard
 @main.route('/leaderboard')
 def leaderboard():
     scores = User.query.join(Score)\
         .with_entities(User.username, db.func.sum(Score.score).label('total_score'))\
         .group_by(User.id).order_by(db.func.sum(Score.score).desc()).all()
 
-    result = [{"username": username, "total_score": total_score} for username, total_score in scores]
-    return jsonify(result)
+    return render_template('leaderboard.html', scores=scores, enumerate=enumerate)

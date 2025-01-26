@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AWS CLI Learning Platform</title>
-    <!-- Correct path for xterm.css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='js/node_modules/xterm/css/xterm.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
@@ -41,9 +40,25 @@
         a:hover {
             text-decoration: underline;
         }
+        .user-info-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            font-size: 14px;
+        }
+        .user-info-container strong {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
+    <div class="user-info-container">
+        <p id="user-info"></p>
+        <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a> |
+        <a href="{{ url_for('main.logout') }}">Logout</a>
+    </div>
+
     <h1>{{ message }}</h1>
 
     <div class="challenge-container">
@@ -61,8 +76,21 @@
 
     <div id="terminal-container"></div>
 
-    <!-- Correct path for xterm.js -->
     <script src="{{ url_for('static', filename='js/node_modules/xterm/lib/xterm.js') }}"></script>
     <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+    <script>
+        fetch('/user_info')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    const userInfoElement = document.getElementById('user-info');
+                    userInfoElement.innerHTML = `
+                        <strong>${data.username}</strong><br>
+                        Score: ${data.total_score}
+                    `;
+                }
+            })
+            .catch(err => console.error('Error fetching user info:', err));
+    </script>
 </body>
 </html>
