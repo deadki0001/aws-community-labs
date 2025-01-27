@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/xterm@4.19.0/css/xterm.css">   
     <title>AWS CLI Learning Platform</title>
     <style>
         /* General Styles */
@@ -132,11 +133,16 @@
     <div class="background-animation"></div>
     <div class="user-info-container">
         <p id="user-info"></p>
-	<a href="{{ url_for('main.leaderboard') }}">Leaderboard</a> |	
+        <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a> |    
         <a href="{{ url_for('main.logout') }}">Logout</a>
     </div>
+    
     <div class="container">
-        <h1>{{ message }}</h1>
+        <h1>AWS CLI Learning Platform</h1>
+        {% if message %}
+            <h2>{{ message }}</h2>
+        {% endif %}
+        
         <div class="challenge-container">
             <h2>Challenges</h2>
             <ul class="challenge-grid">
@@ -146,28 +152,54 @@
                         <h3>{{ challenge.name }}</h3>
                         <p>{{ challenge.description }}</p>
                     </div>
-                    <button class="validate-button" onclick="startChallenge({{ challenge.id }})">Start Challenge</button>
+                    <button class="validate-button" onclick="startChallenge('{{ challenge.id }}')">Start Challenge</button>
                 </li>
                 {% endfor %}
             </ul>
         </div>
+        
         <div id="terminal-container"></div>
     </div>
-    <script src="{{ url_for('static', filename='js/node_modules/xterm/lib/xterm.js') }}"></script>
+
+    <!-- Load scripts in correct order -->
+    <script src="https://unpkg.com/xterm@4.19.0/lib/xterm.js"></script>
+    <script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
     <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/challenges.js') }}"></script>
+    
     <script>
-        fetch('/user_info')
-            .then(response => response.json())
-            .then(data => {
-                if (data.username) {
-                    const userInfoElement = document.getElementById('user-info');
-                    userInfoElement.innerHTML = `
-                        <strong>${data.username}</strong><br>
-                        Score: ${data.total_score}
-                    `;
-                }
-            })
-            .catch(err => console.error('Error fetching user info:', err));
+        // Initialize terminal after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the terminal
+            if (typeof initializeTerminal === 'function') {
+                initializeTerminal();
+            } else {
+                console.error('Terminal initialization function not found');
+            }
+            
+            // Fetch user info
+            fetch('/user_info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.username) {
+                        const userInfoElement = document.getElementById('user-info');
+                        userInfoElement.innerHTML = `
+                            <strong>${data.username}</strong><br>
+                            Score: ${data.total_score}
+                        `;
+                    }
+                })
+                .catch(err => console.error('Error fetching user info:', err));
+        });
+
+        // Make sure startChallenge is properly defined
+        window.startChallenge = function(challengeId) {
+            console.log('Starting challenge:', challengeId);
+            if (typeof term !== 'undefined') {
+                term.clear();
+                term.write(`Challenge ${challengeId} started: Enter your command below.\r\n$ `);
+            }
+        };
     </script>
 </body>
 </html>
