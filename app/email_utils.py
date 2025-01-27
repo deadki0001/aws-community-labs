@@ -1,8 +1,6 @@
 from flask_mail import Message
-from flask import url_for, request, render_template
-from app import create_app, db
-from app import mail
-import secrets
+from flask import url_for, render_template
+from app import create_app, mail
 from app.models import User
 import os
 
@@ -23,21 +21,22 @@ class EmailService:
             </div>
             """
             
+            # Create the email message
             msg = Message(
                 subject="Welcome to AWS CLI Learning Platform! 🌟",
                 sender=("Devon Adkins via AWS CLI Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
-                recipients=[user.email]
+                recipients=[user['email']]  # DynamoDB items use dictionary-style access
             )
             
             # Text body
             msg.body = f"""
-            Hello {user.username}! 👋
+            Hello {user['username']}! 👋
 
             🎉 Welcome to the AWS CLI Learning Platform! 🚀
 
             🔐 Your account has been successfully created. Here are your login details:
 
-            👤 Username: {user.username}
+            👤 Username: {user['username']}
             🔑 Password: {password}
 
             📝 Please log in and change your password after your first login.
@@ -64,13 +63,15 @@ class EmailService:
                 password=password
             ) + signature
             
+            # Attach an image if required
             aws_learning = os.path.join(os.path.dirname(__file__), 'static', 'aws.png')
-            with open(aws_learning, 'rb') as f:
-                msg.attach("cloudlearning", "image/png", f.read(), "aws.png")    
+            if os.path.exists(aws_learning):
+                with open(aws_learning, 'rb') as f:
+                    msg.attach("cloudlearning", "image/png", f.read(), "aws.png")    
 
             try:
                 mail.send(msg)
-                print(f"Welcome email sent to {user.email}")
+                print(f"Welcome email sent to {user['email']}")
                 return True
             except Exception as e:
                 print(f"Error sending welcome email: {e}")

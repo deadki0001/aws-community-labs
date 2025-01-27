@@ -1,17 +1,12 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-
-# Define the global `db` instance
-db = SQLAlchemy()
+from models import DynamoDBManager, initialize_challenges
 
 # Initialize Mail extension
 mail = Mail()
 
 def create_app():
     app = Flask(__name__, static_folder='static')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Set the secret key
     app.config['SECRET_KEY'] = 'dev-secret-key'
@@ -25,9 +20,13 @@ def create_app():
     app.config['MAIL_PASSWORD'] = "Awsapp123!@#!"
     app.config['MAIL_DEFAULT_SENDER'] = "no-reply@deadkithedeveloper.click"
 
-    # Initialize extensions
-    db.init_app(app)
+    # Initialize Mail
     mail.init_app(app)
+
+    # Initialize DynamoDB and set up tables
+    dynamo_manager = DynamoDBManager()
+    dynamo_manager.create_tables()
+    initialize_challenges()
 
     # Import and register blueprints
     from app.routes import main
