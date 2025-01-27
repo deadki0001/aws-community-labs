@@ -1,13 +1,12 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
-from app.models import User, Challenge, Score
-from app import db
+from app.models import User, Challenge, Score, dynamodb
+from boto3.dynamodb.conditions import Attr
 import os
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
 from flask_mail import Message
 from app import mail
-from sqlalchemy import func
 
 main = Blueprint('main', __name__)
 
@@ -15,16 +14,14 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user:  # Ensure user exists in the database
-            challenges = Challenge.query.all()
-            return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
+        user = User.get_by_username(session['user_id'])
+        if user:
+            challenges = Challenge.get_all()
+            return render_template('index.html', challenges=challenges, username=user['username'])
         else:
-            # If the user ID is invalid, clear the session and redirect to signup
             session.pop('user_id', None)
             return redirect(url_for('main.signup'))
     return redirect(url_for('main.signup'))
-
 
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])
@@ -35,51 +32,69 @@ def signup():
         password = request.form.get('password')
 
         # Check if username already exists
-        if User.query.filter_by(username=username).first():
+        if User.get_by_username(username):
             return render_template('signup.html', message="❌ Username already exists.")
 
         # Check if email already exists
-        if User.query.filter_by(email=email).first():
-            return render_template('signup.html', 
-                                   message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
-                                   show_forgot_password=True)
-
-        new_user = User(username=username, password=password, email=email)
-        db.session.add(new_user)
-        
         try:
-            db.session.commit()
-            # Send welcome email
-            EmailService.send_welcome_email(new_user, password)
-            session['user_id'] = new_user.id
+            users_table = dynamodb.Table('Users')
+            response = users_table.scan(
+                FilterExpression=Attr('email').eq(email)
+            )
+            if response.get('Items'):
+                return render_template('signup.html', 
+                                       message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
+                                       show_forgot_password=True)
+        except Exception as e:
+            print(f"Error checking email: {e}")
+            return render_template('signup.html', message="❌ An error occurred. Please try again.")
+
+        # Save the new user
+        new_user = User(username=username, email=email, password=password)
+        try:
+            new_user.save()
+            session['user_id'] = username  # Save username in session
             return redirect(url_for('main.index'))
         except Exception as e:
-            db.session.rollback()
-            return render_template('signup.html', 
-                                   message=f"❌ Registration failed: {str(e)}")
+            print(f"Error saving user: {e}")
+            return render_template('signup.html', message="❌ Registration failed. Please try again.")
 
     return render_template('signup.html')
 
 # Leaderboard Route
 @main.route('/leaderboard')
 def leaderboard():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
+    try:
+        scores_table = dynamodb.Table('Scores')
+        users_table = dynamodb.Table('Users')
 
-    # Get total scores per user, ordered by total score descending
-    leaderboard_data = db.session.query(
-        User.username, 
-        func.sum(Score.score).label('total_score')
-    ).join(Score, User.id == Score.user_id)\
-     .group_by(User.username)\
-     .order_by(func.sum(Score.score).desc())\
-     .limit(10)\
-     .all()
+        # Scan Scores table to aggregate scores by user
+        scores = scores_table.scan().get('Items', [])
+        scores_by_user = {}
+        for score in scores:
+            user_id = score['user_id']
+            scores_by_user[user_id] = scores_by_user.get(user_id, 0) + int(score['score'])
 
-    # Convert to list with enumeration
-    leaderboard_with_rank = list(enumerate(leaderboard_data, 1))
+        # Fetch usernames and sort leaderboard
+        leaderboard_data = [
+            {
+                'username': users_table.get_item(Key={'username': user_id}).get('Item', {}).get('username', 'Unknown'),
+                'total_score': total_score
+            }
+            for user_id, total_score in scores_by_user.items()
+        ]
 
-    return render_template('leaderboard.html', leaderboard=leaderboard_with_rank)
+        # Sort by total score and add rank
+        leaderboard_with_rank = sorted(
+            [{'rank': rank, **entry} for rank, entry in enumerate(leaderboard_data, start=1)],
+            key=lambda x: x['total_score'],
+            reverse=True
+        )
+
+        return render_template('leaderboard.html', leaderboard=leaderboard_with_rank)
+    except Exception as e:
+        print(f"Error retrieving leaderboard: {e}")
+        return render_template('leaderboard.html', leaderboard=[], error="Error loading leaderboard.")
 
 
 @main.route('/user_info')
@@ -242,10 +257,12 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        user = User.query.filter_by(username=username).first()
-        if user and user.password == password:
-            session['user_id'] = user.id
+        # Fetch the user by username
+        user = User.get_by_username(username)
+        if user and user['password'] == password:
+            session['user_id'] = username
             return redirect(url_for('main.index'))
+
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')

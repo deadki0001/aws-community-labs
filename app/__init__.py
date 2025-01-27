@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_mail import Mail
-from models import DynamoDBManager, initialize_challenges
+from app.models import DynamoDBManager, initialize_challenges
 
 # Initialize Mail extension
 mail = Mail()

@@ -6,86 +6,97 @@ from boto3.dynamodb.conditions import Key, Attr
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
 
-# DynamoDB Manager Class
 class DynamoDBManager:
     def __init__(self):
-        self.user_table = dynamodb.Table('Users')
-        self.challenge_table = dynamodb.Table('Challenges')
-        self.score_table = dynamodb.Table('Scores')
+        self.user_table_name = 'Users'
+        self.challenge_table_name = 'Challenges'
+        self.score_table_name = 'Scores'
 
     def create_tables(self):
-        # Create Users table
-        try:
-            dynamodb.create_table(
-                TableName='Users',
-                KeySchema=[
-                    {'AttributeName': 'username', 'KeyType': 'HASH'}
-                ],
-                AttributeDefinitions=[
-                    {'AttributeName': 'username', 'AttributeType': 'S'}
-                ],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5
-                }
-            )
-            print("Users table created.")
-        except Exception as e:
-            print(f"Error creating Users table: {e}")
+        # Get list of existing tables
+        existing_tables = [table.name for table in dynamodb.tables.all()]
 
-        # Create Challenges table
-        try:
-            dynamodb.create_table(
-                TableName='Challenges',
-                KeySchema=[
-                    {'AttributeName': 'id', 'KeyType': 'HASH'}
-                ],
-                AttributeDefinitions=[
-                    {'AttributeName': 'id', 'AttributeType': 'S'}
-                ],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5
-                }
-            )
-            print("Challenges table created.")
-        except Exception as e:
-            print(f"Error creating Challenges table: {e}")
-
-        # Create Scores table
-        try:
-            dynamodb.create_table(
-                TableName='Scores',
-                KeySchema=[
-                    {'AttributeName': 'id', 'KeyType': 'HASH'}
-                ],
-                AttributeDefinitions=[
-                    {'AttributeName': 'id', 'AttributeType': 'S'},
-                    {'AttributeName': 'user_id', 'AttributeType': 'S'}
-                ],
-                GlobalSecondaryIndexes=[
-                    {
-                        'IndexName': 'UserScores',
-                        'KeySchema': [
-                            {'AttributeName': 'user_id', 'KeyType': 'HASH'}
-                        ],
-                        'Projection': {
-                            'ProjectionType': 'ALL'
-                        },
-                        'ProvisionedThroughput': {
-                            'ReadCapacityUnits': 5,
-                            'WriteCapacityUnits': 5
-                        }
+        # Create Users table if it doesn't exist
+        if self.user_table_name not in existing_tables:
+            try:
+                dynamodb.create_table(
+                    TableName=self.user_table_name,
+                    KeySchema=[
+                        {'AttributeName': 'username', 'KeyType': 'HASH'}
+                    ],
+                    AttributeDefinitions=[
+                        {'AttributeName': 'username', 'AttributeType': 'S'}
+                    ],
+                    ProvisionedThroughput={
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
                     }
-                ],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5
-                }
-            )
-            print("Scores table created.")
-        except Exception as e:
-            print(f"Error creating Scores table: {e}")
+                )
+                print("Users table created.")
+            except Exception as e:
+                print(f"Error creating Users table: {e}")
+        else:
+            print("Users table already exists.")
+
+        # Create Challenges table if it doesn't exist
+        if self.challenge_table_name not in existing_tables:
+            try:
+                dynamodb.create_table(
+                    TableName=self.challenge_table_name,
+                    KeySchema=[
+                        {'AttributeName': 'id', 'KeyType': 'HASH'}
+                    ],
+                    AttributeDefinitions=[
+                        {'AttributeName': 'id', 'AttributeType': 'S'}
+                    ],
+                    ProvisionedThroughput={
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
+                    }
+                )
+                print("Challenges table created.")
+            except Exception as e:
+                print(f"Error creating Challenges table: {e}")
+        else:
+            print("Challenges table already exists.")
+
+        # Create Scores table if it doesn't exist
+        if self.score_table_name not in existing_tables:
+            try:
+                dynamodb.create_table(
+                    TableName=self.score_table_name,
+                    KeySchema=[
+                        {'AttributeName': 'id', 'KeyType': 'HASH'}
+                    ],
+                    AttributeDefinitions=[
+                        {'AttributeName': 'id', 'AttributeType': 'S'},
+                        {'AttributeName': 'user_id', 'AttributeType': 'S'}
+                    ],
+                    GlobalSecondaryIndexes=[
+                        {
+                            'IndexName': 'UserScores',
+                            'KeySchema': [
+                                {'AttributeName': 'user_id', 'KeyType': 'HASH'}
+                            ],
+                            'Projection': {
+                                'ProjectionType': 'ALL'
+                            },
+                            'ProvisionedThroughput': {
+                                'ReadCapacityUnits': 5,
+                                'WriteCapacityUnits': 5
+                            }
+                        }
+                    ],
+                    ProvisionedThroughput={
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
+                    }
+                )
+                print("Scores table created.")
+            except Exception as e:
+                print(f"Error creating Scores table: {e}")
+        else:
+            print("Scores table already exists.")
 
 # User Model
 class User:
@@ -125,7 +136,7 @@ class User:
 # Challenge Model
 class Challenge:
     def __init__(self, name, description, solution):
-        self.id = str(uuid.uuid4())
+        self.id = str(uuid.uuid4())  # Matches the key schema in the DynamoDB table
         self.name = name
         self.description = description
         self.solution = solution
@@ -143,13 +154,13 @@ class Challenge:
         try:
             dynamodb.Table('Challenges').put_item(
                 Item={
-                    'id': self.id,
+                    'id': self.id,  # Match the key schema
                     'name': self.name,
                     'description': self.description,
                     'solution': self.solution
                 }
             )
-            print(f"Challenge {self.name} saved successfully.")
+            print(f"Challenge '{self.name}' saved successfully.")
         except Exception as e:
             print(f"Error saving challenge: {e}")
 
