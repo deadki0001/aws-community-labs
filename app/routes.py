@@ -96,19 +96,33 @@ def leaderboard():
         print(f"Error retrieving leaderboard: {e}")
         return render_template('leaderboard.html', leaderboard=[], error="Error loading leaderboard.")
 
-
 @main.route('/user_info')
 def user_info():
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in"}), 401
     
-    user = User.query.get(session['user_id'])
-    total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user.id).scalar() or 0
-    
-    return jsonify({
-        "username": user.username,
-        "total_score": total_score
-    })
+    try:
+        # Get user from DynamoDB using the username stored in session
+        user = User.get_by_username(session['user_id'])
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Get scores for the user from DynamoDB
+        scores_table = dynamodb.Table('Scores')
+        response = scores_table.scan(
+            FilterExpression=Attr('user_id').eq(session['user_id'])
+        )
+        
+        # Calculate total score
+        total_score = sum(int(score['score']) for score in response.get('Items', []))
+        
+        return jsonify({
+            "username": user['username'],
+            "total_score": total_score
+        })
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        return jsonify({"error": "Failed to fetch user information"}), 500
 
 # Update the initialization function to track any potential duplicates
 def initialize_challenges():
@@ -283,58 +297,110 @@ def validate_command():
         user_id = session['user_id']
         data = request.get_json()
         command = data.get('command', '').strip()
-        challenge_id = int(data.get('challenge_id', 0))
+        challenge_id = str(data.get('challenge_id', '0'))  # Convert to string for DynamoDB
 
         print(f"Validating command for User ID: {user_id}, Challenge ID: {challenge_id}, Command: {command}")
 
-        current_challenge = Challenge.query.get(challenge_id)
+        # Get challenge from DynamoDB
+        challenges_table = dynamodb.Table('Challenges')
+        challenge_response = challenges_table.get_item(
+            Key={'id': challenge_id}
+        )
+        current_challenge = challenge_response.get('Item')
 
         if current_challenge:
-            # Match command based only on the stored solution prefix, ignoring additional arguments
-            if current_challenge.name == 'Create an IAM User':
-                # Check if the command starts correctly and contains a username
-                if command.lower().startswith('aws iam create-user --user-name'):
-                    parts = command.split()
-                    if len(parts) > 4:  # Ensure a username is provided
-                        # Check if the user has already completed this challenge
-                        existing_score = Score.query.filter_by(
-                            user_id=user_id, 
-                            challenge_id=current_challenge.id
-                        ).first()
+            # Check if command is valid
+            is_valid_command = False
+            if current_challenge['name'] == 'Create an IAM User':
+                is_valid_command = (
+                    command.lower().startswith('aws iam create-user --user-name') and
+                    len(command.split()) > 4
+                )
+            else:
+                is_valid_command = command.lower().startswith(current_challenge['solution'].strip().lower())
 
-                        if not existing_score:
-                            # Add a new score record if the challenge is completed for the first time
-                            score = Score(
-                                user_id=user_id,
-                                challenge_id=current_challenge.id,
-                                score=10,
-                                completed_at=datetime.now()
-                            )
-                            db.session.add(score)
-                            db.session.commit()
+            if is_valid_command:
+                # Check if user has already completed this challenge
+                scores_table = dynamodb.Table('Scores')
+                existing_score = scores_table.scan(
+                    FilterExpression=Attr('user_id').eq(user_id) & 
+                                   Attr('challenge_id').eq(challenge_id)
+                )
 
-                            # Check total user score for Cloud Warrior badge
-                            total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
-                            print(f"Total score for user {user_id}: {total_score}")
+                if not existing_score.get('Items'):
+                    # Add new score
+                    new_score = {
+                        'id': str(secrets.randbelow(1000000)),  # Generate random ID
+                        'user_id': user_id,
+                        'challenge_id': challenge_id,
+                        'score': 10,
+                        'completed_at': datetime.now().isoformat()
+                    }
+                    scores_table.put_item(Item=new_score)
 
-                            cloud_warrior_achieved = total_score >= 10 and total_score < 20
-                            if cloud_warrior_achieved:
-                                print("Cloud Warrior badge conditions met")
-                                user = User.query.get(user_id)
-                                result = send_cloud_warrior_badge(user)
-                                print(f"Badge email send result: {result}")
+                    # Calculate total score
+                    all_scores = scores_table.scan(
+                        FilterExpression=Attr('user_id').eq(user_id)
+                    ).get('Items', [])
+                    total_score = sum(int(score['score']) for score in all_scores)
 
-                            return jsonify({
-                                "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!", 
-                                "total_score": total_score,
-                                "cloud_warrior": cloud_warrior_achieved
-                            })
-                        else:
-                            return jsonify({"message": "\nYou've already completed this challenge."})
-                    else:
-                        return jsonify({
-                            "message": "⚠️ Your command is incomplete. Provide a username after --user-name. For example: aws iam create-user --user-name myNewUser"
-                        }), 200
+                    # Check for badges
+                    cloud_warrior_achieved = total_score >= 10 and total_score < 50
+                    cloud_sorcerer_achieved = total_score >= 50
+
+                    # Send badge emails if achieved
+                    if cloud_warrior_achieved:
+                        user = User.get_by_username(user_id)
+                        if user:
+                            send_cloud_warrior_badge(user)
+
+                    if cloud_sorcerer_achieved:
+                        user = User.get_by_username(user_id)
+                        if user:
+                            send_cloud_sorcerer_badge(user)
+
+                    return jsonify({
+                        "message": f"✅ Correct! Challenge '{current_challenge['name']}' completed!", 
+                        "total_score": total_score,
+                        "cloud_warrior": cloud_warrior_achieved,
+                        "cloud_sorcerer": cloud_sorcerer_achieved
+                    })
+                else:
+                    return jsonify({"message": "\nYou've already completed this challenge."})
+
+            # Documentation links for incorrect responses
+            links = {
+                'Create a VPC': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html",
+                'Create an S3 Bucket': "https://docs.aws.amazon.com/cli/latest/reference/s3api/create-bucket.html",
+                'Create an RDS Instance': "https://docs.aws.amazon.com/cli/latest/reference/rds/create-db-instance.html",
+                'Create a Security Group': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-security-group.html",
+                'Create an IAM User': "https://docs.aws.amazon.com/cli/latest/reference/iam/create-user.html",
+                'Launch an EC2 instance': "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html"
+            }
+
+            videos = {
+                'Create a VPC': "https://www.youtube.com/watch?v=ctwO-CMGkxg",
+                'Create an S3 Bucket': "https://www.youtube.com/watch?v=RODg8GWKU2Q",
+                'Create an RDS Instance': "https://www.youtube.com/watch?v=QtouOs4tzNk",
+                'Create a Security Group': "https://www.youtube.com/watch?v=XXXXX",
+                'Create an IAM User': "https://www.youtube.com/watch?v=ZQMpSICUEcw",
+                'Launch an EC2 instance': "https://www.youtube.com/watch?v=crNyDkR3ulU"
+            }
+
+            incorrect_message = (
+                f"❌ Incorrect command for challenge: '{current_challenge['name']}'\n"
+                f"Please refer to the AWS documentation here:\n"
+                f"📖 AWS CLI Guide: {links.get(current_challenge['name'], 'https://aws.amazon.com/cli/')}\n"
+                f"🎥 Video Tutorial: {videos.get(current_challenge['name'], 'https://www.youtube.com')}"
+            )
+
+            return jsonify({"message": incorrect_message}), 200
+
+        return jsonify({"message": "❌ Challenge not found."}), 404
+
+    except Exception as e:
+        print(f"Error validating command: {e}")
+        return jsonify({"message": f"❌ An error occurred: {str(e)}"}), 500
 
             # General validation for other challenges
             is_valid_command = command.lower().startswith(current_challenge.solution.strip().lower())
