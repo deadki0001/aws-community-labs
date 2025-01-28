@@ -25,9 +25,9 @@ class EmailService:
             msg = Message(
                 subject="Welcome to AWS CLI Learning Platform! 🌟",
                 sender=("Devon Adkins via AWS CLI Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
-                recipients=[user['email']]  # DynamoDB items use dictionary-style access
+                recipients=[user.email]  # ✅ Corrected
             )
-            
+                        
             # Text body
             msg.body = f"""
             Hello {user['username']}! 👋
