@@ -219,16 +219,15 @@ def reset_password(token):
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username').strip().lower()
+        username = request.form.get('username')  # Remove the lowercase and strip
         password = request.form.get('password')
 
         user = User.query.filter_by(username=username).first()
-        print(f"User found: {user}")  # Debugging: Ensure user is found
-
-        if user and user.check_password(password):  # Verify password hash
+        print(f"User found: {user}")  # Keep the debug line
+        
+        if user and user.password == password:  # Direct password comparison
             session['user_id'] = user.id
             return redirect(url_for('main.index'))
-
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')

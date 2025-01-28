@@ -1,4 +1,4 @@
-// Create a new Terminal instance with proper configuration
+// Create a new Terminal instance with mobile-friendly configuration
 const term = new Terminal({
     cursorBlink: true,
     theme: {
@@ -7,24 +7,52 @@ const term = new Terminal({
     },
     rightClickSelectsWord: true,
     allowProposedApi: true,
-    cols: 100,  // Wider column width for better text display
-    rows: 24,   // Standard number of rows
     convertEol: true,
     wordWrap: true,
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
     fontSize: 14
 });
 
+// Dynamically adjust terminal size based on the screen
+function resizeTerminal() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Adjust cols and rows based on screen size
+    const cols = Math.floor(width / 8);  // Adjust for font size
+    const rows = Math.floor(height / 18);
+    
+    term.resize(cols, rows);
+}
+
 // Attach the terminal to the container
 term.open(document.getElementById('terminal-container'));
+resizeTerminal();  // Initial resize
+window.addEventListener('resize', resizeTerminal);  // Resize on window change
 
-// Allow text selection and copying
-term.attachCustomKeyEventHandler((e) => {
-    // Allow default browser behavior for copying (Ctrl+C / Cmd+C)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        return true;
+// Enable mobile input (Create a hidden input field)
+const mobileInput = document.createElement('input');
+mobileInput.type = 'text';
+mobileInput.style.position = 'absolute';
+mobileInput.style.opacity = 0;
+mobileInput.style.height = '0px';
+mobileInput.style.zIndex = -1;
+document.body.appendChild(mobileInput);
+
+// Focus input field on terminal click
+term.element.addEventListener('click', () => {
+    mobileInput.focus();
+});
+
+// Allow text input through mobile keyboard
+mobileInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    event.target.value = '';  // Clear input field
+
+    for (const char of value) {
+        inputBuffer += char;
+        term.write(char);
     }
-    return true;
 });
 
 // Global variables for terminal state
@@ -72,16 +100,7 @@ function submitCommand(command) {
                 challenge_id: activeChallengeId,
             }),
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || `HTTP error! Status: ${response.status}`);
-                }).catch(() => {
-                    throw new Error(`HTTP error! Status: ${response.statusText}`);
-                });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             const formattedMessage = convertUrlsToLinks(data.message);
             term.write(`\r\n${formattedMessage.replace(/\n/g, '\r\n')}\r\n$ `);
@@ -91,15 +110,13 @@ function submitCommand(command) {
             term.write(`\r\n❌ Error: ${error.message}\r\n$ `);
         });
 
-        if (command.trim() !== '') {
-            commandHistory.push(command.trim());
-        }
+        commandHistory.push(command.trim());
     } else {
         term.write('\r\nNo challenge selected. Click "Start Challenge" first.\r\n$ ');
     }
 }
 
-// Key input handling
+// Key input handling (for physical keyboards)
 term.onKey(({ key, domEvent }) => {
     const ev = domEvent;
 
@@ -121,32 +138,19 @@ term.onKey(({ key, domEvent }) => {
         return;
     }
 
-    // Handle up arrow
-    if (ev.keyCode === 38) {
-        if (commandHistory.length > 0) {
-            if (historyIndex === -1) {
-                historyIndex = commandHistory.length - 1;
-            } else if (historyIndex > 0) {
-                historyIndex--;
-            }
-            inputBuffer = commandHistory[historyIndex];
-            term.write(`\r\x1b[K$ ${inputBuffer}`);
-        }
+    // Handle up arrow (navigate command history)
+    if (ev.keyCode === 38 && commandHistory.length > 0) {
+        historyIndex = Math.max(0, historyIndex - 1);
+        inputBuffer = commandHistory[historyIndex] || '';
+        term.write(`\r\x1b[K$ ${inputBuffer}`);
         return;
     }
 
     // Handle down arrow
     if (ev.keyCode === 40) {
-        if (historyIndex !== -1) {
-            if (historyIndex < commandHistory.length - 1) {
-                historyIndex++;
-                inputBuffer = commandHistory[historyIndex];
-            } else {
-                historyIndex = -1;
-                inputBuffer = '';
-            }
-            term.write(`\r\x1b[K$ ${inputBuffer}`);
-        }
+        historyIndex = historyIndex < commandHistory.length - 1 ? historyIndex + 1 : -1;
+        inputBuffer = historyIndex === -1 ? '' : commandHistory[historyIndex];
+        term.write(`\r\x1b[K$ ${inputBuffer}`);
         return;
     }
 
@@ -168,7 +172,7 @@ window.startChallenge = function(challengeId) {
     historyIndex = -1;
 };
 
-// Mouse event handling for text selection
+// Handle mobile touch events for text selection
 term.element.addEventListener('mouseup', () => {
     if (window.getSelection().toString()) {
         term.blur();
@@ -191,4 +195,3 @@ term.clear = function() {
 
 // Initialize terminal on page load
 initializeTerminal();
-
