@@ -1,8 +1,8 @@
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from app.models import User, Challenge, Score
 from app import db
 import os
-from werkzeug.security import generate_password_hash
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
@@ -238,13 +238,6 @@ def login():
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')
-
-# Route for logging out
-@main.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('main.login'))
-
 # Route for validating a challenge command
 @main.route('/validate', methods=['POST'])
 def validate_command():
