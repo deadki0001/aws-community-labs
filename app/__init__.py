@@ -10,8 +10,10 @@ mail = Mail()
 
 def create_app():
     app = Flask(__name__, static_folder='static')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Ensure instance folder exists
+    os.makedirs(app.instance_path, exist_ok=True)    
 
     # Set the secret key
     app.config['SECRET_KEY'] = 'dev-secret-key'
