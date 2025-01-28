@@ -55,13 +55,17 @@ def signup():
         try:
             db.session.commit()
             session['user_id'] = new_user.id  # Log in the user after signup
-            EmailService.send_welcome_email(new_user, password)  # Pass new_user object
+
+            print(f"DEBUG: new_user = {new_user}, email = {new_user.email}, username = {new_user.username}")
+
+            EmailService.send_welcome_email(new_user, password)  # Ensure `new_user` is passed correctly
             return redirect(url_for('main.index'))            
+
         except Exception as e:
             db.session.rollback()
+            print(f"DEBUG: Registration error: {e}")
             return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
 
-    return render_template('signup.html')
 # Leaderboard Route
 @main.route('/leaderboard')
 def leaderboard():
