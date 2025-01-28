@@ -4,6 +4,8 @@ from app import db
 from sqlalchemy import func, CheckConstraint, Index
 from sqlalchemy.event import listens_for
 
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
@@ -154,5 +156,8 @@ def initialize_challenges():
         db.session.commit()
         print("Challenges added successfully.")
 
-# Run the function
-initialize_challenges()
+        app = create_app() 
+        
+        with app.app_context():
+            from app.models import initialize_challenges
+            initialize_challenges()  # ✅ Now runs inside the Flask app context
