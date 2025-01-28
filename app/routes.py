@@ -54,7 +54,7 @@ def signup():
 
         try:
             db.session.commit()
-            print(f"DEBUG: User created successfully - ID: {new_user.id}, Username: {new_user.username}, Email: {new_user.email}")
+            print(f"DEBUG: User successfully saved - ID: {new_user.id}, Username: {new_user.username}, Email: {new_user.email}")
 
             session['user_id'] = new_user.id  # Log in the user
             EmailService.send_welcome_email(new_user, password)
