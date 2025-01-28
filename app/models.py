@@ -11,7 +11,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True, index=True)
     email = db.Column(db.String(120), nullable=True, unique=True, index=True)
-    password = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)  # Store hashed password
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     
     # Password reset fields
@@ -24,10 +24,10 @@ class User(db.Model):
                            lazy='dynamic')
 
     def __init__(self, username, email, password):
-        """Initialize a new user instance."""
+        """Initialize a new user instance with a hashed password."""
         self.username = username
         self.email = email
-        self.set_password(password)
+        self.set_password(password)  # Hashes the password before storing
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -62,6 +62,18 @@ class User(db.Model):
             .join(Score)\
             .filter(Score.user_id == self.id)\
             .all()
+
+    @staticmethod
+    def update_unhashed_passwords():
+        """Update any existing users with unhashed passwords."""
+        users = User.query.all()
+        for user in users:
+            if not user.password.startswith('pbkdf2:sha256'):  # Check if already hashed
+                user.password = generate_password_hash(user.password)
+        db.session.commit()
+        print("Updated all passwords to hashed format.")
+    
+
 class Challenge(db.Model):
     """Challenge model for storing challenge-related data."""
     id = db.Column(db.Integer, primary_key=True)

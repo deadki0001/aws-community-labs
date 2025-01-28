@@ -34,30 +34,28 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Check if username already exists
+        if not username or not email or not password:
+            return render_template('signup.html', message="❌ All fields are required.")
+
+        # Check if the username already exists
         if User.query.filter_by(username=username).first():
             return render_template('signup.html', message="❌ Username already exists.")
 
         # Check if email already exists
         if User.query.filter_by(email=email).first():
-            return render_template('signup.html', 
-                               message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
-                               show_forgot_password=True)
+            return render_template('signup.html', message="❌ Email already registered.")
 
-        # Create new user with all required parameters
-        new_user = User(username=username, email=email, password=password)
-        db.session.add(new_user)
-        
+        # Create new user with hashed password
+        new_user = User(username=username, email=email, password=generate_password_hash(password))
+
         try:
+            db.session.add(new_user)
             db.session.commit()
-            # Send welcome email
-            EmailService.send_welcome_email(new_user, password)
             session['user_id'] = new_user.id
             return redirect(url_for('main.index'))
         except Exception as e:
-            db.session.rollback()
-            return render_template('signup.html', 
-                               message=f"❌ Registration failed: {str(e)}")
+            db.session.rollback()  # Rollback in case of errors
+            return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
 
@@ -226,7 +224,7 @@ def reset_password(token):
         # Validate the token and find the user
         user = User.query.filter_by(reset_token=token).first()
         if user and user.is_reset_token_valid():
-            user.password = new_password
+            user.password = generate_password_hash(new_password)  # ✅ Hash the password
             user.reset_token = None  # Clear the reset token
             user.reset_token_expiration = None
             db.session.commit()
