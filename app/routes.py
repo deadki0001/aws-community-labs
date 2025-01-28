@@ -31,38 +31,33 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip().lower()
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-        if not username or not email or not password:
-            return render_template('signup.html', message="❌ All fields are required.")
-
-        if User.query.filter(db.func.lower(User.username) == username).first():
+        # Check if username already exists
+        if User.query.filter_by(username=username).first():
             return render_template('signup.html', message="❌ Username already exists.")
 
-        if User.query.filter(db.func.lower(User.email) == email).first():
+        # Check if email already exists
+        if User.query.filter_by(email=email).first():
             return render_template('signup.html', 
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-        # ✅ FIX: Create a new user and set the hashed password
-        new_user = User(username=username, email=email)  
-        new_user.set_password(password)  # ✅ Correct way to store hashed password
-
+        new_user = User(username=username, password=password, email=email)
         db.session.add(new_user)
-
+        
         try:
             db.session.commit()
-            print(f"DEBUG: User successfully saved - ID: {new_user.id}, Username: {new_user.username}, Email: {new_user.email}")
-
-            session['user_id'] = new_user.id  # Log in the user
+            # Send welcome email
             EmailService.send_welcome_email(new_user, password)
+            session['user_id'] = new_user.id
             return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
-            print(f"DEBUG: Registration error: {e}")
-            return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
+            return render_template('signup.html', 
+                                   message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
 
@@ -211,20 +206,13 @@ def reset_password(token):
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip().lower()
-        password = request.form.get('password', '')
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-        print(f"DEBUG: Login attempt for username: {username}")
-
-        user = User.query.filter(db.func.lower(User.username) == username).first()
-        
-        print(f"DEBUG: User found: {user}")
-
-        if user and user.check_password(password):  # ✅ Fix: Use `check_password`
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
             session['user_id'] = user.id
-            print(f"DEBUG: Login successful, session user_id = {session['user_id']}")
             return redirect(url_for('main.index'))
-        
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')

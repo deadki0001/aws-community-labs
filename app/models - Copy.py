@@ -10,21 +10,72 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=True, unique=True)
-    password = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)  # ✅ Use `password_hash` instead of `password`
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
+
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
+    # Relationships
+    scores = db.relationship('Score', back_populates='user',
+                           cascade='all, delete-orphan',
+                           lazy='dynamic')
+
+    def __init__(self, username, email, password=None):
+        """Initialize a new user instance with a hashed password."""
+        self.username = username
+        self.email = email
+        if password:  # Ensure password is hashed before storing
+            self.set_password(password)
+
+    def set_password(self, password):
+        """Hash and set the user's password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Check if the provided password matches the hashed password."""
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<User {self.username}>'
 
     def set_reset_token(self, token):
+        """Set password reset token with 1-hour expiration."""
         self.reset_token = token
         self.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
 
     def is_reset_token_valid(self):
-        return self.reset_token_expiration and datetime.utcnow() < self.reset_token_expiration
+        """Check if reset token is valid and not expired."""
+        return (self.reset_token_expiration and 
+                datetime.utcnow() < self.reset_token_expiration)
+
+    def get_total_score(self):
+        """Calculate total score for the user."""
+        return db.session.query(func.sum(Score.score))\
+            .filter_by(user_id=self.id)\
+            .scalar() or 0
+
+    def get_completed_challenges(self):
+        """Get list of completed challenges for the user."""
+        return db.session.query(Challenge)\
+            .join(Score)\
+            .filter(Score.user_id == self.id)\
+            .all()
+
+    @staticmethod
+    def update_unhashed_passwords():
+        """Update any existing users with unhashed passwords."""
+        users = User.query.all()
+        for user in users:
+            if not user.password_hash.startswith('pbkdf2:sha256'):  # Check if already hashed
+                user.password_hash = generate_password_hash(user.password_hash)
+        db.session.commit()
+        print("Updated all passwords to hashed format.")
+
+    @classmethod
+    def get_by_username(cls, username):
+        """Retrieve user by username (case insensitive)."""
+        return cls.query.filter(func.lower(cls.username) == username.lower()).first()
 
     
 class Challenge(db.Model):
