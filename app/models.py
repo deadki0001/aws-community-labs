@@ -23,7 +23,7 @@ class User(db.Model):
                            cascade='all, delete-orphan',
                            lazy='dynamic')
 
-    def __init__(self, username, password, email=None):
+    def __init__(self, username, email, password):
         """Initialize a new user instance."""
         self.username = username
         self.email = email

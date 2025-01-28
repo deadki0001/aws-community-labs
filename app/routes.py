@@ -34,29 +34,30 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Check for existing username or email
+        # Check if username already exists
         if User.query.filter_by(username=username).first():
             return render_template('signup.html', message="❌ Username already exists.")
+
+        # Check if email already exists
         if User.query.filter_by(email=email).first():
             return render_template('signup.html', 
-                                   message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
-                                   show_forgot_password=True)
+                               message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
+                               show_forgot_password=True)
 
-        # Create new user
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)  # Hash the password
-
+        # Create new user with all required parameters
+        new_user = User(username=username, email=email, password=password)
+        db.session.add(new_user)
+        
         try:
-            db.session.add(new_user)
             db.session.commit()
-            # Send welcome email (optional)
+            # Send welcome email
             EmailService.send_welcome_email(new_user, password)
             session['user_id'] = new_user.id
             return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
             return render_template('signup.html', 
-                                   message=f"❌ Registration failed: {str(e)}")
+                               message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
 
