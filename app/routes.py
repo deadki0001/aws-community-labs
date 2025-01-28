@@ -45,22 +45,23 @@ def signup():
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
+        # Hash the password before storing
+        hashed_password = generate_password_hash(password)
+
         # Create user with hashed password
-        new_user = User(username=username, email=email, password=password)  
+        new_user = User(username=username, email=email, password=hashed_password)  
         db.session.add(new_user)
 
         try:
             db.session.commit()
             session['user_id'] = new_user.id  # Log in the user after signup
-            EmailService.send_welcome_email(new_user, password)
-            session['user_id'] = new_user.id
+            EmailService.send_welcome_email(new_user, password)  # Pass new_user object
             return redirect(url_for('main.index'))            
         except Exception as e:
             db.session.rollback()
             return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
-
 # Leaderboard Route
 @main.route('/leaderboard')
 def leaderboard():
