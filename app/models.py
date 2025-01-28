@@ -85,7 +85,10 @@ class Challenge(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=False)
     solution = db.Column(db.String(255), nullable=False)
-    points = db.Column(db.Integer, default=0)
+    points = db.Column(db.Integer, default=10)  # Default points for each challenge
+
+    def __repr__(self):
+        return f'<Challenge {self.name}>'
 
     # Relationships
     scores = db.relationship('Score', back_populates='challenge',
