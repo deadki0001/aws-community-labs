@@ -85,8 +85,8 @@ class Challenge(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=False)
     solution = db.Column(db.String(255), nullable=False)
-    points = db.Column(db.Integer, default=10)  
-    
+    points = db.Column(db.Integer, default=0)
+
     # Relationships
     scores = db.relationship('Score', back_populates='challenge',
                            cascade='all, delete-orphan',
@@ -121,32 +121,30 @@ def initialize_challenges():
 
     initial_challenges = [
         Challenge(
-            id=str(uuid.uuid4()),  # Generate valid UUID
-            name="Create a VPC",
-            description="Use the AWS CLI to create a VPC.",
-            solution="aws ec2 create-vpc"
-        ) if "Create a VPC" not in existing_challenges else None,
-
+            name='Create a VPC',
+            description='Use the AWS CLI to create a new VPC.',
+            solution='aws ec2 create-vpc'
+        ) if 'Create a VPC' not in existing_challenges else None,
         Challenge(
-            id=str(uuid.uuid4()),
-            name="Create an S3 Bucket",
-            description="Use the AWS CLI to create an S3 bucket.",
-            solution="aws s3 mb"
-        ) if "Create an S3 Bucket" not in existing_challenges else None,
-
+            name='Create an RDS Instance',
+            description='Use the AWS CLI to create an RDS instance.',
+            solution='aws rds create-db-instance'
+        ) if 'Create an RDS Instance' not in existing_challenges else None,
         Challenge(
-            id=str(uuid.uuid4()),
-            name="Create a Security Group",
-            description="Use the AWS CLI to create a security group.",
-            solution="aws ec2 create-security-group"
-        ) if "Create a Security Group" not in existing_challenges else None,
-
+            name='Create a Security Group',
+            description='Use the AWS CLI to create a security group.',
+            solution='aws ec2 create-security-group'
+        ) if 'Create a Security Group' not in existing_challenges else None,
         Challenge(
-            id=str(uuid.uuid4()),
-            name="Launch an EC2 instance",
-            description="Use the AWS CLI to launch an EC2 instance.",
-            solution="aws ec2 run-instances"
-        ) if "Launch an EC2 instance" not in existing_challenges else None
+            name='Create an IAM User',
+            description='Use the AWS CLI to create a new IAM user.',
+            solution='aws iam create-user --user-name'
+        ) if 'Create an IAM User' not in existing_challenges else None,
+        Challenge(
+            name='Launch an EC2 instance',
+            description='Use the AWS CLI to launch an EC2 instance.',
+            solution='aws ec2 run-instances'
+        ) if 'Launch an EC2 instance' not in existing_challenges else None,
     ]
 
     initial_challenges = [c for c in initial_challenges if c]
