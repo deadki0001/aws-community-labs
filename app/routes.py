@@ -16,13 +16,14 @@ def index():
     if 'user_id' in session:
         user = User.get_by_username(session['user_id'])
         if user:
-            challenges = Challenge.get_all()
+            challenges = Challenge.get_all()  # Ensures all challenge data is fetched
             return render_template('index.html', challenges=challenges, username=user['username'])
         else:
+            # Remove invalid session and redirect to signup
             session.pop('user_id', None)
             return redirect(url_for('main.signup'))
+    # Redirect to signup if no user is in session
     return redirect(url_for('main.signup'))
-
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():

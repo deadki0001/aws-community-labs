@@ -2,6 +2,12 @@ from datetime import datetime, timedelta
 import boto3
 import uuid
 from boto3.dynamodb.conditions import Key, Attr
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
@@ -134,36 +140,69 @@ class User:
             print(f"Error saving user: {e}")
 
 # Challenge Model
+# Challenge Model
 class Challenge:
     def __init__(self, name, description, solution):
-        self.id = str(uuid.uuid4())  # Matches the key schema in the DynamoDB table
+        self.challenge_id = str(uuid.uuid4())  # Use 'challenge_id' as the primary key
         self.name = name
         self.description = description
         self.solution = solution
+        self.table = dynamodb.Table('Challenges')
 
     @staticmethod
     def get_all():
+        table = dynamodb.Table('Challenges')
         try:
-            response = dynamodb.Table('Challenges').scan()
-            return response.get('Items', [])
+            response = table.scan()
+            challenges = response.get('Items', [])
+            logger.info(f"Retrieved {len(challenges)} challenges from DynamoDB")
+            return challenges
         except Exception as e:
-            print(f"Error retrieving challenges: {e}")
+            logger.error(f"Error retrieving challenges: {str(e)}")
             return []
+
+    @staticmethod
+    def get_by_id(challenge_id):
+        table = dynamodb.Table('Challenges')
+        try:
+            response = table.get_item(Key={'challenge_id': challenge_id})
+            challenge = response.get('Item')
+            logger.info(f"Retrieved challenge with ID {challenge_id}: {challenge is not None}")
+            return challenge
+        except Exception as e:
+            logger.error(f"Error retrieving challenge {challenge_id}: {str(e)}")
+            return None
 
     def save(self):
         try:
-            dynamodb.Table('Challenges').put_item(
-                Item={
-                    'id': self.id,  # Match the key schema
-                    'name': self.name,
-                    'description': self.description,
-                    'solution': self.solution
-                }
-            )
-            print(f"Challenge '{self.name}' saved successfully.")
+            item = {
+                'challenge_id': self.challenge_id,  # Use 'challenge_id' as key
+                'name': self.name,
+                'description': self.description,
+                'solution': self.solution,
+                'created_at': datetime.utcnow().isoformat()
+            }
+            self.table.put_item(Item=item)
+            logger.info(f"Successfully saved challenge '{self.name}' with ID {self.challenge_id}")
+            return True
         except Exception as e:
-            print(f"Error saving challenge: {e}")
+            logger.error(f"Error saving challenge '{self.name}': {str(e)}")
+            return False
 
+def debug_challenges():
+    """Utility function to check the state of challenges in the database"""
+    try:
+        challenges = Challenge.get_all()
+        logger.info("=== Current Challenges in Database ===")
+        for challenge in challenges:
+            logger.info(f"ID: {challenge.get('id')}")
+            logger.info(f"Name: {challenge.get('name')}")
+            logger.info(f"Description: {challenge.get('description')}")
+            logger.info("---")
+        return len(challenges)
+    except Exception as e:
+        logger.error(f"Error in debug_challenges: {str(e)}")
+        return 0
 # Score Model
 class Score:
     def __init__(self, user_id, challenge_id, score):

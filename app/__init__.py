@@ -1,15 +1,23 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-from app.models import DynamoDBManager, initialize_challenges
+from flask_migrate import Migrate
 
-# Initialize Mail extension
+# Initialize extensions
+db = SQLAlchemy()
 mail = Mail()
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__, static_folder='static')
 
-    # Set the secret key
+    # Basic Flask configuration
     app.config['SECRET_KEY'] = 'dev-secret-key'
+
+    # MySQL configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/aws_cli_platform'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db = SQLAlchemy(app)a
 
     # Email configuration
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
@@ -20,16 +28,22 @@ def create_app():
     app.config['MAIL_PASSWORD'] = "Awsapp123!@#!"
     app.config['MAIL_DEFAULT_SENDER'] = "no-reply@deadkithedeveloper.click"
 
-    # Initialize Mail
+    # Initialize extensions with app
+    db.init_app(app)
     mail.init_app(app)
+    migrate.init_app(app, db)
 
-    # Initialize DynamoDB and set up tables
-    dynamo_manager = DynamoDBManager()
-    dynamo_manager.create_tables()
-    initialize_challenges()
+    # Import models here to avoid circular imports
+    from app.models import User, Challenge, Score
+    
+    # Create tables and initialize data
+    with app.app_context():
+        db.create_all()
+        initialize_challenges(db)
 
     # Import and register blueprints
     from app.routes import main
     app.register_blueprint(main)
 
     return app
+

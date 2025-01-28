@@ -192,14 +192,6 @@
                 .catch(err => console.error('Error fetching user info:', err));
         });
 
-        // Make sure startChallenge is properly defined
-        window.startChallenge = function(challengeId) {
-            console.log('Starting challenge:', challengeId);
-            if (typeof term !== 'undefined') {
-                term.clear();
-                term.write(`Challenge ${challengeId} started: Enter your command below.\r\n$ `);
-            }
-        };
     </script>
 </body>
 </html>
