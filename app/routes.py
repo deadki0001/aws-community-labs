@@ -32,6 +32,7 @@ def index():
 def signup():
     if request.method == 'POST':
         username = request.form.get('username').strip().lower()
+        new_user = User(username=username, password=password, email=email)
         email = request.form.get('email').strip().lower()
         password = request.form.get('password')
 
