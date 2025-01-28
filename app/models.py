@@ -11,7 +11,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
-    password = db.Column(db.String(255), nullable=False)  # Stores hashed password
+    password_hash = db.Column(db.String(255), nullable=False)  # Stores hashed password
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     # Password reset fields
@@ -32,11 +32,11 @@ class User(db.Model):
 
     def set_password(self, password):
         """Hash and set the user's password."""
-        self.password = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         """Check if the provided password matches the hashed password."""
-        return check_password_hash(self.password, password)
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -69,8 +69,8 @@ class User(db.Model):
         """Update any existing users with unhashed passwords."""
         users = User.query.all()
         for user in users:
-            if not user.password.startswith('pbkdf2:sha256'):  # Check if already hashed
-                user.password = generate_password_hash(user.password)
+            if not user.password_hash.startswith('pbkdf2:sha256'):  # Check if already hashed
+                user.password_hash = generate_password_hash(user.password_hash)
         db.session.commit()
         print("Updated all passwords to hashed format.")
 

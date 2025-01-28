@@ -31,21 +31,21 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        # Get user input first
-        username = request.form.get('username').strip().lower()
-        email = request.form.get('email').strip().lower()
-        password = request.form.get('password')
+        # Get user input and normalize case
+        username = request.form.get('username', '').strip().lower()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
 
         # Validate input: Ensure all fields are provided
         if not username or not email or not password:
             return render_template('signup.html', message="❌ All fields are required.")
 
-        # Check if username already exists
-        if User.query.filter_by(username=username).first():
+        # Check if username already exists (case insensitive)
+        if User.query.filter(db.func.lower(User.username) == username).first():
             return render_template('signup.html', message="❌ Username already exists.")
 
-        # Check if email already exists
-        if User.query.filter_by(email=email).first():
+        # Check if email already exists (case insensitive)
+        if User.query.filter(db.func.lower(User.email) == email).first():
             return render_template('signup.html', 
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
@@ -54,7 +54,7 @@ def signup():
         hashed_password = generate_password_hash(password)
 
         # Create new user with hashed password
-        new_user = User(username=username, email=email, password=hashed_password)  
+        new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
 
         try:
@@ -64,7 +64,7 @@ def signup():
             print(f"DEBUG: new_user = {new_user}, email = {new_user.email}, username = {new_user.username}")
 
             # Send welcome email
-            EmailService.send_welcome_email(new_user, password)  
+            EmailService.send_welcome_email(new_user, password)
             return redirect(url_for('main.index'))            
 
         except Exception as e:
