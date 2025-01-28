@@ -114,45 +114,45 @@ class Score(db.Model):
         return f'<Score User:{self.user_id}, Challenge:{self.challenge_id}, Score:{self.score}>'
 
 def initialize_challenges():
-    """Initialize default challenges if they don't exist."""
+    """Ensure all challenges exist in the database."""
     existing_challenges = {challenge.name for challenge in Challenge.query.all()}
+
     initial_challenges = [
         Challenge(
-            name='Create a VPC',
-            description='Use the AWS CLI to create a new VPC.',
-            solution='aws ec2 create-vpc'
-        ) if 'Create a VPC' not in existing_challenges else None,
+            id=str(uuid.uuid4()),  # Generate valid UUID
+            name="Create a VPC",
+            description="Use the AWS CLI to create a VPC.",
+            solution="aws ec2 create-vpc"
+        ) if "Create a VPC" not in existing_challenges else None,
+
         Challenge(
-            name='Create an RDS Instance',
-            description='Use the AWS CLI to create an RDS instance.',
-            solution='aws rds create-db-instance'
-        ) if 'Create an RDS Instance' not in existing_challenges else None,
+            id=str(uuid.uuid4()),
+            name="Create an S3 Bucket",
+            description="Use the AWS CLI to create an S3 bucket.",
+            solution="aws s3 mb"
+        ) if "Create an S3 Bucket" not in existing_challenges else None,
+
         Challenge(
-            name='Create a Security Group',
-            description='Use the AWS CLI to create a security group.',
-            solution='aws ec2 create-security-group'
-        ) if 'Create a Security Group' not in existing_challenges else None,
+            id=str(uuid.uuid4()),
+            name="Create a Security Group",
+            description="Use the AWS CLI to create a security group.",
+            solution="aws ec2 create-security-group"
+        ) if "Create a Security Group" not in existing_challenges else None,
+
         Challenge(
-            name='Create an IAM User',
-            description='Use the AWS CLI to create a new IAM user.',
-            solution='aws iam create-user --user-name'
-        ) if 'Create an IAM User' not in existing_challenges else None,
-        Challenge(
-            name='Launch an EC2 instance',
-            description='Use the AWS CLI to launch an EC2 instance.',
-            solution='aws ec2 run-instances'
-        ) if 'Launch an EC2 instance' not in existing_challenges else None,
-        Challenge(
-            name='Create an S3 Bucket',
-            description='Use the AWS CLI to Create an S3 Bucket.',
-            solution='aws s3 mb'
-        ) if 'Create an S3 Bucket' not in existing_challenges else None
+            id=str(uuid.uuid4()),
+            name="Launch an EC2 instance",
+            description="Use the AWS CLI to launch an EC2 instance.",
+            solution="aws ec2 run-instances"
+        ) if "Launch an EC2 instance" not in existing_challenges else None
     ]
-    
-    # Filter out None values (already existing challenges)
-    initial_challenges = [challenge for challenge in initial_challenges if challenge]
-    
+
+    initial_challenges = [c for c in initial_challenges if c]
+
     if initial_challenges:
         db.session.add_all(initial_challenges)
         db.session.commit()
-        print("Updated challenges in the database.")
+        print("Challenges added successfully.")
+
+# Run the function
+initialize_challenges()
