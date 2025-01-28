@@ -3,28 +3,29 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from sqlalchemy import func, CheckConstraint, Index
 from sqlalchemy.event import listens_for
-    
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=True, unique=True)
     password = db.Column(db.String(255), nullable=False)  # Stores hashed password
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
+
     # Password reset fields
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
-    
+
     # Relationships
     scores = db.relationship('Score', back_populates='user',
-                           cascade='all, delete-orphan',
-                           lazy='dynamic')
+                             cascade='all, delete-orphan',
+                             lazy='dynamic')
 
-    def __init__(self, username, email, password):
+    def __init__(self, username, email, password=None):
         """Initialize a new user instance with a hashed password."""
         self.username = username
         self.email = email
-        self.set_password(password)  # Hashes the password before storing
+        if password:  # Ensure password is hashed before storing
+            self.set_password(password)
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -69,10 +70,12 @@ class User(db.Model):
                 user.password = generate_password_hash(user.password)
         db.session.commit()
         print("Updated all passwords to hashed format.")
-    
+
     @classmethod
     def get_by_username(cls, username):
-        return cls.query.filter_by(username=username).first()
+        """Retrieve user by username (case insensitive)."""
+        return cls.query.filter(func.lower(cls.username) == username.lower()).first()
+
     
 class Challenge(db.Model):
     """Challenge model for storing challenge-related data."""

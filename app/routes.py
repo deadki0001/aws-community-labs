@@ -31,7 +31,7 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username').strip().lower()  # Store usernames in lowercase
+        username = request.form.get('username').strip().lower()
         email = request.form.get('email').strip().lower()
         password = request.form.get('password')
 
@@ -45,8 +45,8 @@ def signup():
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)  # Hash password before storing
+        # Create user with hashed password
+        new_user = User(username=username, email=email, password=password)  
         db.session.add(new_user)
 
         try:
@@ -238,23 +238,19 @@ def reset_password(token):
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = request.form.get('username').strip().lower()
         password = request.form.get('password')
 
-        # Fetch user by username
         user = User.query.filter_by(username=username).first()
-        
-        # Check if user exists and password is correct
-        if user and user.check_password(password):  # Use hashed password check
+        print(f"User found: {user}")  # Debugging: Ensure user is found
+
+        if user and user.check_password(password):  # Verify password hash
             session['user_id'] = user.id
             return redirect(url_for('main.index'))
-        
-        # If login failed, return an error message
-        return render_template('login.html', message="❌ Invalid username or password.")
-    
-    # If GET request, just render the login page
-    return render_template('login.html')
 
+        return render_template('login.html', message="❌ Invalid username or password.")
+
+    return render_template('login.html')
 
 # Route for logging out
 @main.route('/logout')
