@@ -245,8 +245,9 @@ def validate_command():
             return jsonify({"message": "❌ No challenge selected."}), 400
 
         try:
-            challenge_id = int(challenge_id)  # Convert to int if IDs are numeric
+            challenge_id = int(challenge_id)  # Ensure it's an integer for SQLite
         except ValueError:
+            print(f"Invalid challenge_id received: {challenge_id}")
             return jsonify({"message": "❌ Invalid challenge ID format."}), 400
 
         # Find the challenge in the database
