@@ -1,7 +1,6 @@
 from flask_mail import Message
 from flask import url_for, render_template
 from app import create_app, mail
-from app.models import User
 import os
 
 class EmailService:
@@ -20,59 +19,63 @@ class EmailService:
                 📧 devon@deadkithedeveloper.click</p>
             </div>
             """
-            
-            # Create the email message
-            msg = Message(
-                subject="Welcome to AWS CLI Learning Platform! 🌟",
-                sender=("Devon Adkins via AWS CLI Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
-                recipients=[user.email]  # ✅ Corrected
-            )
-                        
-            # Text body
-            msg.body = f"""
-            Hello {user['username']}! 👋
-
-            🎉 Welcome to the AWS CLI Learning Platform! 🚀
-
-            🔐 Your account has been successfully created. Here are your login details:
-
-            👤 Username: {user['username']}
-            🔑 Password: {password}
-
-            📝 Please log in and change your password after your first login.
-
-            🌈 Challenges await you! Start your AWS CLI learning journey now.
-
-            🆘 If you have any issues, contact us at:
-            devon@deadkithedeveloper.click
-
-            🏆 Happy Learning!
-            AWS CLI Learning Platform Team 💻
-
-            ---
-            Best regards,
-            Devon Adkins
-            AWS CLI Learning Platform
-            https://deadkithedeveloper.click
-            """
-            
-            # HTML version with signature
-            msg.html = render_template(
-                'welcome_email.html',
-                user=user,
-                password=password
-            ) + signature
-            
-            # Attach an image if required
-            aws_learning = os.path.join(os.path.dirname(__file__), 'static', 'aws.png')
-            if os.path.exists(aws_learning):
-                with open(aws_learning, 'rb') as f:
-                    msg.attach("cloudlearning", "image/png", f.read(), "aws.png")    
 
             try:
+                print(f"DEBUG: Sending email to {user.email}")  # ✅ Ensure user.email is correct
+                print(f"DEBUG: Full user object: {user}")
+
+                # Create the email message
+                msg = Message(
+                    subject="Welcome to AWS CLI Learning Platform! 🌟",
+                    sender=("Devon Adkins via AWS CLI Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
+                    recipients=[user.email]  # ✅ Corrected
+                )
+
+                # Corrected text body (Use dot notation instead of dictionary notation)
+                msg.body = f"""
+                Hello {user.username}! 👋
+
+                🎉 Welcome to the AWS CLI Learning Platform! 🚀
+
+                🔐 Your account has been successfully created. Here are your login details:
+
+                👤 Username: {user.username}
+                🔑 Password: {password}
+
+                📝 Please log in and change your password after your first login.
+
+                🌈 Challenges await you! Start your AWS CLI learning journey now.
+
+                🆘 If you have any issues, contact us at:
+                devon@deadkithedeveloper.click
+
+                🏆 Happy Learning!
+                AWS CLI Learning Platform Team 💻
+
+                ---
+                Best regards,
+                Devon Adkins
+                AWS CLI Learning Platform
+                https://deadkithedeveloper.click
+                """
+
+                # HTML version with signature
+                msg.html = render_template(
+                    'welcome_email.html',
+                    user=user,
+                    password=password
+                ) + signature
+
+                # Attach an image if required
+                aws_learning = os.path.join(os.path.dirname(__file__), 'static', 'aws.png')
+                if os.path.exists(aws_learning):
+                    with open(aws_learning, 'rb') as f:
+                        msg.attach("cloudlearning", "image/png", f.read(), "aws.png")    
+
                 mail.send(msg)
-                print(f"Welcome email sent to {user.email}")
+                print(f"DEBUG: Welcome email sent successfully to {user.email}")
                 return True
+
             except Exception as e:
-                print(f"Error sending welcome email: {e}")
+                print(f"DEBUG: Error sending welcome email: {e}")
                 return False
