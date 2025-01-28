@@ -244,11 +244,9 @@ def validate_command():
         if not challenge_id:
             return jsonify({"message": "❌ No challenge selected."}), 400
 
-        import uuid
         try:
-            uuid.UUID(challenge_id)
+            challenge_id = int(challenge_id)  # Convert to int if IDs are numeric
         except ValueError:
-            print("Invalid UUID format for challenge_id.")
             return jsonify({"message": "❌ Invalid challenge ID format."}), 400
 
         # Find the challenge in the database
