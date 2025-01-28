@@ -94,40 +94,6 @@ def user_info():
         "total_score": total_score
     })
 
-# Update the initialization function to track any potential duplicates
-def initialize_challenges():
-    existing_challenges = {challenge.name for challenge in Challenge.query.all()}
-    initial_challenges = [
-        Challenge(
-            name='Create a VPC',
-            description='Use the AWS CLI to create a new VPC.',
-            solution='aws ec2 create-vpc --cidr-block 10.0.0.0/16'
-        ) if 'Create a VPC' not in existing_challenges else None,
-        Challenge(
-            name='Create an RDS Instance',
-            description='Use the AWS CLI to create an RDS instance.',
-            solution='aws rds create-db-instance --db-instance-identifier <identifier> --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password'
-        ) if 'Create an RDS Instance' not in existing_challenges else None,
-        Challenge(
-            name='Create a Security Group',
-            description='Use the AWS CLI to create a security group.',
-            solution='aws ec2 create-security-group --group-name <group-name> --description "Security group for demo purposes"'
-        ) if 'Create a Security Group' not in existing_challenges else None,
-        Challenge(
-            name='Create an IAM User',
-            description='Use the AWS CLI to create a new IAM user.',
-            solution='aws iam create-user --user-name <user-name>'
-        ) if 'Create an IAM User' not in existing_challenges else None,
-    ]
-    
-    # Filter out None values (already existing challenges)
-    initial_challenges = [challenge for challenge in initial_challenges if challenge]
-    
-    if initial_challenges:
-        db.session.add_all(initial_challenges)
-        db.session.commit()
-        print("Updated challenges in the database.")
-
 # Forgot password
 @main.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():

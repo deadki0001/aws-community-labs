@@ -46,7 +46,6 @@ def signup():
 
         # Create new user
         new_user = User(username=username, email=email)
-        new_user.set_password(password)
         new_user.set_password(password)  # Hash the password
 
         try:
