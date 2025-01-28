@@ -1,46 +1,25 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const commandForm = document.getElementById('command-form');
-    
     if (commandForm) {
-        commandForm.addEventListener('submit', function(e) {
+        commandForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
-            const commandInput = document.getElementById('command-input');
             const challengeId = document.getElementById('challenge-id').value;
-            const command = commandInput.value.trim();
-            
+            const command = document.getElementById('command-input').value.trim();
+
             fetch('/validate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    command: command,
-                    challenge_id: challengeId
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command, challenge_id: challengeId }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    const messageDiv = document.getElementById('command-message');
+                    messageDiv.textContent = data.message;
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Display response message
-                const messageDiv = document.getElementById('command-message');
-                messageDiv.textContent = data.message;
-                
-                // Check for Cloud Warrior badge
-                if (data.cloud_warrior) {
-                    showCloudWarriorPopup();
-                }
-                // Check for Cloud Sorcerer badge
-                if (data.cloud_sorcerer) {
-                    showCloudSorcererPopup();
-                }                
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                .catch((err) => console.error('Validation Error:', err));
         });
     }
 });
-
 function showCloudWarriorPopup() {
     const popup = document.createElement('div');
     popup.innerHTML = `

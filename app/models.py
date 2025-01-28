@@ -38,19 +38,23 @@ class User(UserMixin, db.Model):
     def get_by_username(username):
         return User.query.filter_by(username=username).first()
 
-
 class Challenge(db.Model):
+    __tablename__ = 'challenge'  # Ensure the table name matches MySQL's lowercase table name
+
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     solution = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     scores = db.relationship('Score', backref='challenge', lazy='dynamic')
-    
+
     @staticmethod
     def get_all():
+        """
+        Retrieve all challenges from the database.
+        """
         try:
             challenges = Challenge.query.all()
             logger.info(f"Retrieved {len(challenges)} challenges from database")
@@ -61,15 +65,24 @@ class Challenge(db.Model):
 
     @staticmethod
     def get_by_id(challenge_id):
+        """
+        Retrieve a challenge by its ID.
+        """
         try:
             challenge = Challenge.query.get(challenge_id)
-            logger.info(f"Retrieved challenge with ID {challenge_id}: {challenge is not None}")
+            if challenge:
+                logger.info(f"Retrieved challenge with ID {challenge_id}: {challenge.name}")
+            else:
+                logger.warning(f"Challenge with ID {challenge_id} not found")
             return challenge
         except Exception as e:
             logger.error(f"Error retrieving challenge {challenge_id}: {str(e)}")
             return None
 
     def save(self):
+        """
+        Save the challenge to the database.
+        """
         try:
             db.session.add(self)
             db.session.commit()

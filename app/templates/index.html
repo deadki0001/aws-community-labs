@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/xterm@4.19.0/css/xterm.css">   
     <title>AWS CLI Learning Platform</title>
     <style>
         /* General Styles */
@@ -84,25 +83,24 @@
         .validate-button:hover {
             background-color: #e65c00;
         }
-    .challenge-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    .challenge-grid li {
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
+        .challenge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .challenge-grid li {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
         /* Terminal Section */
         #terminal-container {
             width: 100%;
             height: 50vh;
             background: #000;
-            color: rgb(0, 0, 0);
             border-radius: 10px;
             overflow: hidden;
             margin-top: 2rem;
@@ -133,16 +131,11 @@
     <div class="background-animation"></div>
     <div class="user-info-container">
         <p id="user-info"></p>
-        <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a> |    
+        <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a> |
         <a href="{{ url_for('main.logout') }}">Logout</a>
     </div>
-    
     <div class="container">
-        <h1>AWS CLI Learning Platform</h1>
-        {% if message %}
-            <h2>{{ message }}</h2>
-        {% endif %}
-        
+        <h1>{{ message }}</h1>
         <div class="challenge-container">
             <h2>Challenges</h2>
             <ul class="challenge-grid">
@@ -152,54 +145,33 @@
                         <h3>{{ challenge.name }}</h3>
                         <p>{{ challenge.description }}</p>
                     </div>
-                    <button class="validate-button" onclick="startChallenge('{{ challenge.id }}')">Start Challenge</button>
+                    <button 
+                        class="validate-button" 
+                        onclick="startChallenge('{{ challenge.id }}', '{{ challenge.name }}')">
+                        Start Challenge
+                    </button>
                 </li>
                 {% endfor %}
             </ul>
         </div>
-        
         <div id="terminal-container"></div>
     </div>
-
-    <!-- Load scripts in correct order -->
-    <script src="https://unpkg.com/xterm@4.19.0/lib/xterm.js"></script>
-    <script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
+    <script src="{{ url_for('static', filename='js/node_modules/xterm/lib/xterm.js') }}"></script>
     <script src="{{ url_for('static', filename='js/terminal.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/challenge.js') }}"></script>
-    
     <script>
-        // Initialize terminal after DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the terminal
-            if (typeof initializeTerminal === 'function') {
-                initializeTerminal();
-            } else {
-                console.error('Terminal initialization function not found');
-            }
-            
-            // Fetch user info
-            fetch('/user_info')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.username) {
-                        const userInfoElement = document.getElementById('user-info');
-                        userInfoElement.innerHTML = `
-                            <strong>${data.username}</strong><br>
-                            Score: ${data.total_score}
-                        `;
-                    }
-                })
-                .catch(err => console.error('Error fetching user info:', err));
-        });
-
-        // Make sure startChallenge is properly defined
-        window.startChallenge = function(challengeId) {
-            console.log('Starting challenge:', challengeId);
-            if (typeof term !== 'undefined') {
-                term.clear();
-                term.write(`Challenge ${challengeId} started: Enter your command below.\r\n$ `);
-            }
-        };
+        fetch('/user_info')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    const userInfoElement = document.getElementById('user-info');
+                    userInfoElement.innerHTML = `
+                        <strong>${data.username}</strong><br>
+                        Score: ${data.total_score}
+                    `;
+                }
+            })
+            .catch(err => console.error('Error fetching user info:', err));
     </script>
 </body>
 </html>
+
