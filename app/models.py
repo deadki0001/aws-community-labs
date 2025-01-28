@@ -62,7 +62,6 @@ class User(db.Model):
             .join(Score)\
             .filter(Score.user_id == self.id)\
             .all()
-
 class Challenge(db.Model):
     """Challenge model for storing challenge-related data."""
     id = db.Column(db.Integer, primary_key=True)

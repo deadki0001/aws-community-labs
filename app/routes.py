@@ -243,13 +243,20 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
+        # Fetch user by username
         user = User.query.filter_by(username=username).first()
+        
+        # Check if user exists and password is correct
         if user and user.check_password(password):  # Use hashed password check
             session['user_id'] = user.id
             return redirect(url_for('main.index'))
+        
+        # If login failed, return an error message
         return render_template('login.html', message="❌ Invalid username or password.")
-
+    
+    # If GET request, just render the login page
     return render_template('login.html')
+
 
 # Route for logging out
 @main.route('/logout')
