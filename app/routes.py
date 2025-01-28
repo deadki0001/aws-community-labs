@@ -46,12 +46,12 @@ def signup():
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-        # Create new user
+        # ✅ Fix: Create a new user and set the hashed password
         new_user = User(username=username, email=email)
-        new_user.set_password(password)
+        new_user.set_password(password)  # ✅ Hash the password correctly
 
         db.session.add(new_user)
-        
+
         try:
             db.session.commit()
             print(f"DEBUG: User created successfully - ID: {new_user.id}, Username: {new_user.username}, Email: {new_user.email}")
@@ -220,7 +220,7 @@ def login():
         
         print(f"DEBUG: User found: {user}")
 
-        if user and user.check_password(password):
+        if user and user.check_password(password):  # ✅ Fix: Use `check_password`
             session['user_id'] = user.id
             print(f"DEBUG: Login successful, session user_id = {session['user_id']}")
             return redirect(url_for('main.index'))

@@ -10,7 +10,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=True, unique=True)
-    password_hash = db.Column(db.String(255), nullable=False)  # Change from `password`
+    password_hash = db.Column(db.String(255), nullable=False)  # ✅ Use `password_hash` instead of `password`
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     reset_token = db.Column(db.String(100), nullable=True)
