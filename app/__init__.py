@@ -1,7 +1,6 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_mail import Mail
 
 db = SQLAlchemy()
@@ -33,16 +32,9 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
-    migrate = Migrate(app, db)  # Enable Flask-Migrate for database migrations
 
     # Import and register blueprints
     from app.routes import main
-    app.register_blueprint(main, url_prefix='/')
-
-    # Debugging: Print all registered routes
-    with app.app_context():
-        print("Registered Routes:")
-        for rule in app.url_map.iter_rules():
-            print(rule)
+    app.register_blueprint(main)
 
     return app
