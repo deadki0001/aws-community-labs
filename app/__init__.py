@@ -1,19 +1,22 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_mail import Mail
 
-# Define the global `db` instance
 db = SQLAlchemy()
-
-# Initialize Mail extension
 mail = Mail()
 
 def create_app():
     app = Flask(__name__, static_folder='static')
+
+    # Ensure instance folder exists before defining the database path
+    os.makedirs(app.instance_path, exist_ok=True)
+    
+    # Define the correct database path inside the instance folder
+    db_path = os.path.join(app.instance_path, 'app.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # Ensure instance folder exists
-    os.makedirs(app.instance_path, exist_ok=True)    
 
     # Set the secret key
     app.config['SECRET_KEY'] = 'dev-secret-key'
@@ -30,6 +33,7 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
+    migrate = Migrate(app, db)  # Enable Flask-Migrate for database migrations
 
     # Import and register blueprints
     from app.routes import main
