@@ -14,13 +14,11 @@ logger = logging.getLogger(__name__)
 
 # Initialize MySQL resource
 
-
-
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reset_token = db.Column(db.String(100))
     reset_token_expiration = db.Column(db.DateTime)
@@ -28,9 +26,18 @@ class User(UserMixin, db.Model):
     # Relationships
     scores = db.relationship('Score', backref='user', lazy='dynamic')
     
+    def set_password(self, password):
+        """Hash and set the user's password"""
+        self.password = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check if provided password matches the hash"""
+        return check_password_hash(self.password, password)
+    
     @staticmethod
     def get_by_username(username):
         return User.query.filter_by(username=username).first()
+
 
 class Challenge(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

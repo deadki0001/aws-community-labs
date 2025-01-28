@@ -56,6 +56,8 @@ def signup():
     return render_template('signup.html')
 
 # Leaderboard Route
+
+@main.route('/leaderboard')
 def leaderboard():
     try:
         # Get all scores grouped by user with total score
@@ -87,34 +89,6 @@ def user_info():
         return jsonify({"error": "Not logged in"}), 401
     
     try:
-        # Get user from DynamoDB using the username stored in session
-        user = User.get_by_username(session['user_id'])
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-
-        # Get scores for the user from DynamoDB
-        scores_table = dynamodb.Table('Scores')
-        response = scores_table.scan(
-            FilterExpression=Attr('user_id').eq(session['user_id'])
-        )
-        
-        # Calculate total score
-        total_score = sum(int(score['score']) for score in response.get('Items', []))
-        
-        return jsonify({
-            "username": user['username'],
-            "total_score": total_score
-        })
-    except Exception as e:
-        print(f"Error fetching user info: {e}")
-        return jsonify({"error": "Failed to fetch user information"}), 500
-
-@main.route('/user_info')
-def user_info():
-    if 'user_id' not in session:
-        return jsonify({"error": "Not logged in"}), 401
-    
-    try:
         user = User.query.filter_by(username=session['user_id']).first()
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -129,6 +103,7 @@ def user_info():
     except Exception as e:
         print(f"Error fetching user info: {e}")
         return jsonify({"error": "Failed to fetch user information"}), 500
+
 
 # Forgot password
 @main.route('/forgot-password', methods=['GET', 'POST'])
