@@ -80,9 +80,10 @@ class User(db.Model):
 class Challenge(db.Model):
     """Challenge model for storing challenge-related data."""
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False, unique=True)
+    name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=False)
     solution = db.Column(db.String(255), nullable=False)
+    points = db.Column(db.Integer, default=0)
     
     # Relationships
     scores = db.relationship('Score', back_populates='challenge',

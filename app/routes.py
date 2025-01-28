@@ -360,7 +360,7 @@ def validate_command():
             return jsonify({
                 "message": (
                     f"❌ Incorrect command for challenge: '{current_challenge.name}'\n"
-                    f"📖 Refer to the AWS documentation here:\n {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}"
+                    f"📖 Refer to the AWS documentation here:\n {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}\n"
                     f"🎥 Watch this video tutorial:\n {videos.get(current_challenge.name, 'https://www.youtube.com')}"                    
                 )
             }), 200
