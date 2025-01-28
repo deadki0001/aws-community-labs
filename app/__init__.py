@@ -15,7 +15,7 @@ def create_app():
     app.config['SECRET_KEY'] = 'dev-secret-key'
 
     # MySQL configuration (use pymysql)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/aws_cli_platform'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/aws_cli_platform'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL debugging
 
