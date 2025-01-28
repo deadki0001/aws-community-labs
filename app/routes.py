@@ -50,13 +50,11 @@ def signup():
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-        # Hash the password before storing
-        hashed_password = generate_password_hash(password)
+
 
         # Create new user with hashed password
-        new_user = User(username=username, email=email, password=hashed_password)
-        db.session.add(new_user)
-
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)  # Store hashed passw
         try:
             db.session.commit()
             session['user_id'] = new_user.id  # Log in the user after signup

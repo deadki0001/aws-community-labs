@@ -7,17 +7,14 @@ from sqlalchemy.event import listens_for
 
 
 class User(db.Model):
-    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
-    email = db.Column(db.String(120), nullable=False, unique=True)
-    password_hash = db.Column(db.String(255), nullable=False)  # Stores hashed password
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    email = db.Column(db.String(120), nullable=True, unique=True)
+    password_hash = db.Column(db.String(255), nullable=False)  # Change from `password`
 
-    # Password reset fields
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
-
     # Relationships
     scores = db.relationship('Score', back_populates='user',
                            cascade='all, delete-orphan',
