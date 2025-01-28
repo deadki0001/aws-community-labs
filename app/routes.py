@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from app.models import User, Challenge, Score
 from app import db
 import os
+from werkzeug.security import generate_password_hash
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
@@ -37,7 +38,7 @@ def signup():
         if not username or not email or not password:
             return render_template('signup.html', message="❌ All fields are required.")
 
-        # Check if the username already exists
+        # Check if username already exists
         if User.query.filter_by(username=username).first():
             return render_template('signup.html', message="❌ Username already exists.")
 
@@ -45,7 +46,6 @@ def signup():
         if User.query.filter_by(email=email).first():
             return render_template('signup.html', message="❌ Email already registered.")
 
-        # Create new user with hashed password
         new_user = User(username=username, email=email, password=generate_password_hash(password))
 
         try:
@@ -54,7 +54,7 @@ def signup():
             session['user_id'] = new_user.id
             return redirect(url_for('main.index'))
         except Exception as e:
-            db.session.rollback()  # Rollback in case of errors
+            db.session.rollback()
             return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')

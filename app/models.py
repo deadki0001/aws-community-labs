@@ -73,7 +73,10 @@ class User(db.Model):
         db.session.commit()
         print("Updated all passwords to hashed format.")
     
-
+    @classmethod
+    def get_by_username(cls, username):
+        return cls.query.filter_by(username=username).first()
+    
 class Challenge(db.Model):
     """Challenge model for storing challenge-related data."""
     id = db.Column(db.Integer, primary_key=True)
