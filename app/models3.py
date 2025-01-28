@@ -64,20 +64,21 @@ class Challenge(db.Model):
     scores = db.relationship('Score', back_populates='challenge',
                            cascade='all, delete-orphan',
                            lazy='dynamic')
+    
+
 class Score(db.Model):
     """Score model for tracking user progress in challenges."""
     __tablename__ = 'score'
-
-    id = db.Column(db.Integer, primary_key=True)  # Ensure this is defined
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    challenge_id = db.Column(db.String(36), db.ForeignKey('challenge.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), 
+                       nullable=False, index=True)
+    challenge_id = db.Column(db.String(36), 
+                           db.ForeignKey('challenge.id', ondelete='CASCADE'),
+                           nullable=False, index=True)
     score = db.Column(db.Integer, default=0)
     completed_at = db.Column(db.DateTime, server_default=db.func.now())
     attempts = db.Column(db.Integer, default=1)
-
-    def __repr__(self):
-        return f'<Score User:{self.user_id}, Challenge:{self.challenge_id}, Score:{self.score}>'    
-
     
     # Relationships
     user = db.relationship('User', back_populates='scores')

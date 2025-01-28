@@ -2,12 +2,14 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from app.models import User, Challenge, Score
 from app import db
 import os
+import uuid
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
 from flask_mail import Message
 from app import mail
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 main = Blueprint('main', __name__)
 
@@ -257,6 +259,7 @@ def logout():
     return redirect(url_for('main.login'))
 
 # Route for validating a challenge command
+
 @main.route('/validate', methods=['POST'])
 def validate_command():
     if 'user_id' not in session:
@@ -264,151 +267,96 @@ def validate_command():
 
     try:
         user_id = session['user_id']
-        print(f"Session User ID: {user_id}")
-
         data = request.get_json()
         command = data.get('command', '').strip()
-        challenge_id = data.get('challenge_id', '')
+        challenge_id = data.get('challenge_id')
 
-        print(f"Received command: '{command}', Challenge ID: '{challenge_id}'")
-
-        if not challenge_id:
-            return jsonify({"message": "❌ No challenge selected."}), 400
-
-        import uuid
+        # Convert challenge_id to int if it's not already
         try:
-            uuid.UUID(challenge_id)
-        except ValueError:
-            print("Invalid UUID format for challenge_id.")
+            challenge_id = int(challenge_id)
+        except (ValueError, TypeError):
             return jsonify({"message": "❌ Invalid challenge ID format."}), 400
 
+        print(f"Validating command for User ID: {user_id}, Command: {command}")
+
         current_challenge = Challenge.query.get(challenge_id)
+
         if not current_challenge:
-            print(f"Challenge with ID {challenge_id} not found in the database.")
-            raise ValueError("Challenge not found")  # Raise an exception
-
-        print(f"Current Challenge: {current_challenge.name}")
-
-        if command.lower().startswith(current_challenge.solution.strip().lower()):
-            existing_score = Score.query.filter_by(
-                user_id=user_id,
-                challenge_id=current_challenge.id
-            ).first()
-
-            if not existing_score:
-                score = Score(
-                    user_id=user_id,
-                    challenge_id=current_challenge.id,
-                    score=10,
-                    completed_at=datetime.now()
-                )
-                db.session.add(score)
-                db.session.commit()
-
-                total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
-                print(f"Total score for user {user_id}: {total_score}")
-
-                cloud_warrior_achieved = total_score >= 10 and total_score < 20
-                if cloud_warrior_achieved:
-                    print("Cloud Warrior badge conditions met")
-                    user = User.query.get(user_id)
-                    result = send_cloud_warrior_badge(user)
-                    print(f"Badge email send result: {result}")
-
-                return jsonify({
-                    "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!",
-                    "total_score": total_score,
-                    "cloud_warrior": cloud_warrior_achieved
-                })
-            else:
-                return jsonify({"message": "\nYou've already completed this challenge."})
-        else:
-            return jsonify({
-                "message": "⚠️ Your command is incomplete. Provide a username after --user-name. For example: aws iam create-user --user-name myNewUser"
-            }), 200
-
-
+            return jsonify({"message": "❌ Challenge not found."}), 404
+        # Validate the command
         is_valid_command = command.lower().startswith(current_challenge.solution.strip().lower())
-
         if is_valid_command:
-            existing_score = Score.query.filter_by(
-                user_id=user_id,
-                challenge_id=current_challenge.id
-            ).first()
+            # Check if the user has already completed the challenge
+            existing_score = Score.query.filter_by(user_id=user_id, challenge_id=current_challenge.id).first()
+            if existing_score:
+                return jsonify({"message": "✅ You've already completed this challenge."})
 
-            if not existing_score:
-                score = Score(
+            try:
+                # Add new score for the challenge
+                new_score = Score(
+                    id=str(uuid.uuid4()),  # Generate a unique ID for the score entry
                     user_id=user_id,
                     challenge_id=current_challenge.id,
                     score=10,
-                    completed_at=datetime.now()
+                    completed_at=datetime.utcnow()
                 )
-                db.session.add(score)
+                db.session.add(new_score)
                 db.session.commit()
 
-                total_score = db.session.query(func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
-                print(f"Total score for user {user_id}: {total_score}")
+                # Calculate total score
+                total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
 
-                cloud_warrior_achieved = total_score >= 10 and total_score < 20
+                # Check and send badges if conditions are met
+                cloud_warrior_achieved = 10 <= total_score < 50
                 cloud_sorcerer_achieved = total_score >= 50
-                if cloud_warrior_achieved:
-                    print("Cloud Warrior badge conditions met")
-                    user = User.query.get(user_id)
-                    result = send_cloud_warrior_badge(user)
-                    print(f"Badge email send result: {result}")
 
+                if cloud_warrior_achieved:
+                    send_cloud_warrior_badge(User.query.get(user_id))
                 if cloud_sorcerer_achieved:
-                    print("Cloud Sorcerer badge conditions met")
-                    user = User.query.get(user_id)
-                    result = send_cloud_sorcerer_badge(user)
-                    print(f"Badge email send result: {result}")
+                    send_cloud_sorcerer_badge(User.query.get(user_id))
 
                 return jsonify({
                     "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!",
                     "total_score": total_score,
-                    "cloud_warrior": cloud_warrior_achieved
+                    "cloud_warrior": cloud_warrior_achieved,
+                    "cloud_sorcerer": cloud_sorcerer_achieved
                 })
-            else:
-                return jsonify({"message": "\nYou've already completed this challenge."})
 
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"Database error during score insertion: {e}")
+                return jsonify({"message": "❌ A database error occurred. Please ensure the challenge exists and try again."}), 500
 
-        links = {  # ... (your links dictionary)
+        # Documentation links for incorrect responses
+        links = {
             'Create a VPC': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-vpc.html",
             'Create an S3 Bucket': "https://docs.aws.amazon.com/cli/latest/reference/s3api/create-bucket.html",
             'Create an RDS Instance': "https://docs.aws.amazon.com/cli/latest/reference/rds/create-db-instance.html",
             'Create a Security Group': "https://docs.aws.amazon.com/cli/latest/reference/ec2/create-security-group.html",
             'Create an IAM User': "https://docs.aws.amazon.com/cli/latest/reference/iam/create-user.html",
-            'Launch an EC2 instance': "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html",
-            'AWS CLI Guide': "https://docs.aws.amazon.com/cli/v1/userguide/cli-services-ec2-instances.html"
+            'Launch an EC2 instance': "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html"
         }
 
-        videos = {  # ... (your videos dictionary)
+        videos = {
             'Create a VPC': "https://www.youtube.com/watch?v=ctwO-CMGkxg",
             'Create an S3 Bucket': "https://www.youtube.com/watch?v=RODg8GWKU2Q",
             'Create an RDS Instance': "https://www.youtube.com/watch?v=QtouOs4tzNk",
             'Create a Security Group': "https://www.youtube.com/watch?v=XXXXX",
             'Create an IAM User': "https://www.youtube.com/watch?v=ZQMpSICUEcw",
-            'Launch an EC2 instance': "https://www.youtube.com/watch?v=crNyDkR3ulU",
-            'Stephen Maarek': "https://www.youtube.com/watch?v=crNyDkR3ulU"
+            'Launch an EC2 instance': "https://www.youtube.com/watch?v=crNyDkR3ulU"
         }
 
         incorrect_message = (
             f"❌ Incorrect command for challenge: '{current_challenge.name}'\n"
-            f"Please refer to the AWS documentation here:\n"
-            f"📖 AWS CLI Guide: {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}\n"
-            f"🎥 Video Tutorial: {videos.get(current_challenge.name, 'https://www.youtube.com')}"
+            f"📖 AWS Documentation: {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}\n"
+            f"🎥 Video Tutorial: {videos.get(current_challenge.name, 'https://www.youtube.com/')}"
         )
-
         return jsonify({"message": incorrect_message}), 200
 
-    except ValueError as e:  # Catch the specific exception
-        print(f"Error: {e}")
-        return jsonify({"message": "❌ Challenge not found."}), 404
-
-    except Exception as e:  # Catch any other exception
-        print(f"Error validating command: {e}")
-        return jsonify({"message": f"❌ An error occurred: {str(e)}"}), 500
-
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"message": f"❌ An unexpected error occurred: {str(e)}"}), 500
 def send_cloud_warrior_badge(user):
     """
     Send Cloud Warrior badge email
