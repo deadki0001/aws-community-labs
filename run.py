@@ -4,28 +4,23 @@ from app.models import initialize_challenges, User
 
 # Set environment variables
 os.environ['FLASK_ENV'] = 'development'
-os.environ['FLASK_DEBUG'] = '1'  # Enable debug mode
+os.environ['FLASK_DEBUG'] = '1'
 
-# Create the Flask app instance
 app = create_app()
 
-# Initialize DynamoDB and seed initial data
-with app.app_context():  # Ensure app context is active
+with app.app_context():
     try:
-        # Seed initial challenges in the DynamoDB table
-        initialize_challenges()
+        initialize_challenges()  # Remove db parameter
         print("Challenges initialized successfully.")
 
-        # Debugging: Check for existing users
-        user_test = User.get_by_username("test_user")  # Replace "test_user" with a sample username to check
+        user_test = User.get_by_username("test_user")
         if user_test:
-            print(f"Test user exists: {user_test['username']}")
+            print(f"Test user exists: {user_test.username}")  # Changed from dictionary to object access
         else:
-            print("No test user found in DynamoDB.")
+            print("No test user found in database.")
 
     except Exception as e:
-        print(f"An error occurred while initializing DynamoDB: {e}")
+        print(f"An error occurred while initializing database: {e}")
 
-# Run the Flask application
 if __name__ == "__main__":
     app.run(debug=True)

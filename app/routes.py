@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
-from app.models import User, Challenge, Score, dynamodb
-from boto3.dynamodb.conditions import Attr
+from flask_login import login_user, logout_user, login_required, current_user
+from app.models import User, Challenge, Score, db
 import os
 import secrets
 from app.email_utils import EmailService
@@ -14,17 +14,15 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' in session:
-        user = User.get_by_username(session['user_id'])
+        user = User.query.filter_by(username=session['user_id']).first()
         if user:
-            challenges = Challenge.get_all()  # Ensures all challenge data is fetched
-            return render_template('index.html', challenges=challenges, username=user['username'])
+            challenges = Challenge.get_all()
+            return render_template('index.html', challenges=challenges, username=user.username)
         else:
-            # Remove invalid session and redirect to signup
             session.pop('user_id', None)
             return redirect(url_for('main.signup'))
-    # Redirect to signup if no user is in session
     return redirect(url_for('main.signup'))
-# Route for the sign-up page
+
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -32,65 +30,51 @@ def signup():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        # Check if username already exists
-        if User.get_by_username(username):
+        # Check if username or email already exists
+        if User.query.filter_by(username=username).first():
             return render_template('signup.html', message="❌ Username already exists.")
+        
+        if User.query.filter_by(email=email).first():
+            return render_template('signup.html', 
+                                message="❌ Email already registered. Click 'Forgot Password' to recover your account.",
+                                show_forgot_password=True)
 
-        # Check if email already exists
+        # Create new user
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)  # Using the password hashing method from User model
+        
         try:
-            users_table = dynamodb.Table('Users')
-            response = users_table.scan(
-                FilterExpression=Attr('email').eq(email)
-            )
-            if response.get('Items'):
-                return render_template('signup.html', 
-                                       message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
-                                       show_forgot_password=True)
-        except Exception as e:
-            print(f"Error checking email: {e}")
-            return render_template('signup.html', message="❌ An error occurred. Please try again.")
-
-        # Save the new user
-        new_user = User(username=username, email=email, password=password)
-        try:
-            new_user.save()
-            session['user_id'] = username  # Save username in session
+            db.session.add(new_user)
+            db.session.commit()
+            session['user_id'] = username
             return redirect(url_for('main.index'))
         except Exception as e:
+            db.session.rollback()
             print(f"Error saving user: {e}")
             return render_template('signup.html', message="❌ Registration failed. Please try again.")
 
     return render_template('signup.html')
 
 # Leaderboard Route
-@main.route('/leaderboard')
 def leaderboard():
     try:
-        scores_table = dynamodb.Table('Scores')
-        users_table = dynamodb.Table('Users')
+        # Get all scores grouped by user with total score
+        leaderboard_data = db.session.query(
+            User.username,
+            db.func.sum(Score.score).label('total_score')
+        ).join(Score).group_by(User.username).order_by(
+            db.func.sum(Score.score).desc()
+        ).all()
 
-        # Scan Scores table to aggregate scores by user
-        scores = scores_table.scan().get('Items', [])
-        scores_by_user = {}
-        for score in scores:
-            user_id = score['user_id']
-            scores_by_user[user_id] = scores_by_user.get(user_id, 0) + int(score['score'])
-
-        # Fetch usernames and sort leaderboard
-        leaderboard_data = [
+        # Format the data with rankings
+        leaderboard_with_rank = [
             {
-                'username': users_table.get_item(Key={'username': user_id}).get('Item', {}).get('username', 'Unknown'),
-                'total_score': total_score
+                'rank': rank + 1,
+                'username': entry[0],
+                'total_score': int(entry[1])
             }
-            for user_id, total_score in scores_by_user.items()
+            for rank, entry in enumerate(leaderboard_data)
         ]
-
-        # Sort by total score and add rank
-        leaderboard_with_rank = sorted(
-            [{'rank': rank, **entry} for rank, entry in enumerate(leaderboard_data, start=1)],
-            key=lambda x: x['total_score'],
-            reverse=True
-        )
 
         return render_template('leaderboard.html', leaderboard=leaderboard_with_rank)
     except Exception as e:
@@ -125,39 +109,26 @@ def user_info():
         print(f"Error fetching user info: {e}")
         return jsonify({"error": "Failed to fetch user information"}), 500
 
-# Update the initialization function to track any potential duplicates
-def initialize_challenges():
-    existing_challenges = {challenge.name for challenge in Challenge.query.all()}
-    initial_challenges = [
-        Challenge(
-            name='Create a VPC',
-            description='Use the AWS CLI to create a new VPC.',
-            solution='aws ec2 create-vpc --cidr-block 10.0.0.0/16'
-        ) if 'Create a VPC' not in existing_challenges else None,
-        Challenge(
-            name='Create an RDS Instance',
-            description='Use the AWS CLI to create an RDS instance.',
-            solution='aws rds create-db-instance --db-instance-identifier <identifier> --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username admin --master-user-password password'
-        ) if 'Create an RDS Instance' not in existing_challenges else None,
-        Challenge(
-            name='Create a Security Group',
-            description='Use the AWS CLI to create a security group.',
-            solution='aws ec2 create-security-group --group-name <group-name> --description "Security group for demo purposes"'
-        ) if 'Create a Security Group' not in existing_challenges else None,
-        Challenge(
-            name='Create an IAM User',
-            description='Use the AWS CLI to create a new IAM user.',
-            solution='aws iam create-user --user-name <user-name>'
-        ) if 'Create an IAM User' not in existing_challenges else None,
-    ]
+@main.route('/user_info')
+def user_info():
+    if 'user_id' not in session:
+        return jsonify({"error": "Not logged in"}), 401
     
-    # Filter out None values (already existing challenges)
-    initial_challenges = [challenge for challenge in initial_challenges if challenge]
-    
-    if initial_challenges:
-        db.session.add_all(initial_challenges)
-        db.session.commit()
-        print("Updated challenges in the database.")
+    try:
+        user = User.query.filter_by(username=session['user_id']).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Calculate total score
+        total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user.id).scalar() or 0
+        
+        return jsonify({
+            "username": user.username,
+            "total_score": total_score
+        })
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        return jsonify({"error": "Failed to fetch user information"}), 500
 
 # Forgot password
 @main.route('/forgot-password', methods=['GET', 'POST'])
@@ -171,7 +142,8 @@ def forgot_password():
             reset_token = secrets.token_urlsafe(32)
             
             # Save the reset token with expiration
-            user.set_reset_token(reset_token)
+            user.reset_token = reset_token
+            user.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
             db.session.commit()
             
             # Construct reset link
@@ -189,14 +161,11 @@ def forgot_password():
             </div>
             """
             
-            # Prepare email
             msg = Message(
                 subject="Password Reset Instructions - AWS CLI Learning Platform",
-                sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
                 recipients=[user.email]
             )
             
-            # Text body
             msg.body = f"""
             Hello {user.username},
             
@@ -215,7 +184,6 @@ def forgot_password():
             https://deadkithedeveloper.click
             """
             
-            # HTML body with signature
             msg.html = f"""
             <p>Hello {user.username},</p>
             
@@ -232,14 +200,14 @@ def forgot_password():
             try:
                 mail.send(msg)
                 return render_template('forgot_password.html', 
-                                       message="Password reset instructions sent to your email.")
+                                    message="Password reset instructions sent to your email.")
             except Exception as e:
                 print(f"Error sending reset email: {e}")
                 return render_template('forgot_password.html', 
-                                       message="Failed to send reset instructions. Please try again.")
+                                    message="Failed to send reset instructions. Please try again.")
         else:
             return render_template('forgot_password.html', 
-                                   message="No account found with this email.")
+                                message="No account found with this email.")
     
     return render_template('forgot_password.html')
 
@@ -252,11 +220,10 @@ def reset_password(token):
         if new_password != confirm_password:
             return render_template('reset_password.html', message='Passwords do not match.')
 
-        # Validate the token and find the user
         user = User.query.filter_by(reset_token=token).first()
-        if user and user.is_reset_token_valid():
-            user.password = new_password
-            user.reset_token = None  # Clear the reset token
+        if user and user.reset_token_expiration > datetime.utcnow():
+            user.set_password(new_password)
+            user.reset_token = None
             user.reset_token_expiration = None
             db.session.commit()
             return render_template('reset_password.html', message='Password reset successful. You can now log in.')
@@ -264,17 +231,14 @@ def reset_password(token):
             return render_template('reset_password.html', message='Invalid or expired reset token.')
 
     return render_template('reset_password.html')
-
-# Route for the login page
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
 
-        # Fetch the user by username
-        user = User.get_by_username(username)
-        if user and user['password'] == password:
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):  # Using the password check method from User model
             session['user_id'] = username
             return redirect(url_for('main.index'))
 
@@ -282,7 +246,6 @@ def login():
 
     return render_template('login.html')
 
-# Route for logging out
 @main.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -298,52 +261,45 @@ def validate_command():
         user_id = session['user_id']
         data = request.get_json()
         command = data.get('command', '').strip()
-        challenge_id = str(data.get('challenge_id', '0'))  # Convert to string for DynamoDB
+        challenge_id = data.get('challenge_id', '0')
 
         print(f"Validating command for User ID: {user_id}, Challenge ID: {challenge_id}, Command: {command}")
 
-        # Get challenge from DynamoDB
-        challenges_table = dynamodb.Table('Challenges')
-        challenge_response = challenges_table.get_item(
-            Key={'id': challenge_id}
-        )
-        current_challenge = challenge_response.get('Item')
+        # Get challenge from database
+        current_challenge = Challenge.query.get(challenge_id)
 
         if current_challenge:
             # Check if command is valid
             is_valid_command = False
-            if current_challenge['name'] == 'Create an IAM User':
+            if current_challenge.name == 'Create an IAM User':
                 is_valid_command = (
                     command.lower().startswith('aws iam create-user --user-name') and
                     len(command.split()) > 4
                 )
             else:
-                is_valid_command = command.lower().startswith(current_challenge['solution'].strip().lower())
+                is_valid_command = command.lower().startswith(current_challenge.solution.strip().lower())
 
             if is_valid_command:
                 # Check if user has already completed this challenge
-                scores_table = dynamodb.Table('Scores')
-                existing_score = scores_table.scan(
-                    FilterExpression=Attr('user_id').eq(user_id) & 
-                                   Attr('challenge_id').eq(challenge_id)
-                )
+                user = User.query.filter_by(username=user_id).first()
+                existing_score = Score.query.filter_by(
+                    user_id=user.id,
+                    challenge_id=challenge_id
+                ).first()
 
-                if not existing_score.get('Items'):
+                if not existing_score:
                     # Add new score
-                    new_score = {
-                        'id': str(secrets.randbelow(1000000)),  # Generate random ID
-                        'user_id': user_id,
-                        'challenge_id': challenge_id,
-                        'score': 10,
-                        'completed_at': datetime.now().isoformat()
-                    }
-                    scores_table.put_item(Item=new_score)
+                    new_score = Score(
+                        user_id=user.id,
+                        challenge_id=challenge_id,
+                        score=10,
+                        completed_at=datetime.utcnow()
+                    )
+                    db.session.add(new_score)
+                    db.session.commit()
 
                     # Calculate total score
-                    all_scores = scores_table.scan(
-                        FilterExpression=Attr('user_id').eq(user_id)
-                    ).get('Items', [])
-                    total_score = sum(int(score['score']) for score in all_scores)
+                    total_score = db.session.query(db.func.sum(Score.score)).filter_by(user_id=user.id).scalar() or 0
 
                     # Check for badges
                     cloud_warrior_achieved = total_score >= 10 and total_score < 50
@@ -351,17 +307,13 @@ def validate_command():
 
                     # Send badge emails if achieved
                     if cloud_warrior_achieved:
-                        user = User.get_by_username(user_id)
-                        if user:
-                            send_cloud_warrior_badge(user)
+                        send_cloud_warrior_badge(user)
 
                     if cloud_sorcerer_achieved:
-                        user = User.get_by_username(user_id)
-                        if user:
-                            send_cloud_sorcerer_badge(user)
+                        send_cloud_sorcerer_badge(user)
 
                     return jsonify({
-                        "message": f"✅ Correct! Challenge '{current_challenge['name']}' completed!", 
+                        "message": f"✅ Correct! Challenge '{current_challenge.name}' completed!",
                         "total_score": total_score,
                         "cloud_warrior": cloud_warrior_achieved,
                         "cloud_sorcerer": cloud_sorcerer_achieved
@@ -389,10 +341,10 @@ def validate_command():
             }
 
             incorrect_message = (
-                f"❌ Incorrect command for challenge: '{current_challenge['name']}'\n"
+                f"❌ Incorrect command for challenge: '{current_challenge.name}'\n"
                 f"Please refer to the AWS documentation here:\n"
-                f"📖 AWS CLI Guide: {links.get(current_challenge['name'], 'https://aws.amazon.com/cli/')}\n"
-                f"🎥 Video Tutorial: {videos.get(current_challenge['name'], 'https://www.youtube.com')}"
+                f"📖 AWS CLI Guide: {links.get(current_challenge.name, 'https://aws.amazon.com/cli/')}\n"
+                f"🎥 Video Tutorial: {videos.get(current_challenge.name, 'https://www.youtube.com')}"
             )
 
             return jsonify({"message": incorrect_message}), 200

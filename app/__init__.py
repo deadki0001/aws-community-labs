@@ -17,7 +17,6 @@ def create_app():
     # MySQL configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/aws_cli_platform'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db = SQLAlchemy(app)a
 
     # Email configuration
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
@@ -34,16 +33,15 @@ def create_app():
     migrate.init_app(app, db)
 
     # Import models here to avoid circular imports
-    from app.models import User, Challenge, Score
+    from app.models import User, Challenge, Score, initialize_challenges
     
     # Create tables and initialize data
     with app.app_context():
         db.create_all()
-        initialize_challenges(db)
+        initialize_challenges()
 
     # Import and register blueprints
     from app.routes import main
     app.register_blueprint(main)
 
     return app
-
