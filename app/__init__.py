@@ -38,7 +38,6 @@ def create_app():
     
     # Apply migrations and initialize data
     with app.app_context():
-        upgrade()  # Apply database migrations
         initialize_challenges()
 
     # Register blueprints
