@@ -71,7 +71,7 @@ class EmailService:
 
             try:
                 mail.send(msg)
-                print(f"Welcome email sent to {user['email']}")
+                print(f"Welcome email sent to {user.email}")
                 return True
             except Exception as e:
                 print(f"Error sending welcome email: {e}")
