@@ -3,15 +3,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from sqlalchemy import func, CheckConstraint, Index
 from sqlalchemy.event import listens_for
-
-class User(db.Model):
-    """User model for storing user-related data."""
-    __tablename__ = 'user'
     
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False, unique=True, index=True)
-    email = db.Column(db.String(120), nullable=True, unique=True, index=True)
-    password = db.Column(db.String(255), nullable=False)  # Store hashed password
+    username = db.Column(db.String(80), nullable=False, unique=True)
+    email = db.Column(db.String(120), nullable=True, unique=True)
+    password = db.Column(db.String(255), nullable=False)  # Stores hashed password
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     
     # Password reset fields

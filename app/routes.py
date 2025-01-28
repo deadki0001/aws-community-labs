@@ -31,12 +31,9 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
+        username = request.form.get('username').strip().lower()  # Store usernames in lowercase
+        email = request.form.get('email').strip().lower()
         password = request.form.get('password')
-
-        if not username or not email or not password:
-            return render_template('signup.html', message="❌ All fields are required.")
 
         # Check if username already exists
         if User.query.filter_by(username=username).first():
@@ -44,14 +41,17 @@ def signup():
 
         # Check if email already exists
         if User.query.filter_by(email=email).first():
-            return render_template('signup.html', message="❌ Email already registered.")
+            return render_template('signup.html', 
+                                   message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
+                                   show_forgot_password=True)
 
-        new_user = User(username=username, email=email, password=generate_password_hash(password))
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)  # Hash password before storing
+        db.session.add(new_user)
 
         try:
-            db.session.add(new_user)
             db.session.commit()
-            session['user_id'] = new_user.id
+            session['user_id'] = new_user.id  # Log in the user after signup
             return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
