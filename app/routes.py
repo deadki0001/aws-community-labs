@@ -31,10 +31,14 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        # Get user input first
         username = request.form.get('username').strip().lower()
-        new_user = User(username=username, password=password, email=email)
         email = request.form.get('email').strip().lower()
         password = request.form.get('password')
+
+        # Validate input: Ensure all fields are provided
+        if not username or not email or not password:
+            return render_template('signup.html', message="❌ All fields are required.")
 
         # Check if username already exists
         if User.query.filter_by(username=username).first():
@@ -49,7 +53,7 @@ def signup():
         # Hash the password before storing
         hashed_password = generate_password_hash(password)
 
-        # Create user with hashed password
+        # Create new user with hashed password
         new_user = User(username=username, email=email, password=hashed_password)  
         db.session.add(new_user)
 
@@ -59,13 +63,16 @@ def signup():
 
             print(f"DEBUG: new_user = {new_user}, email = {new_user.email}, username = {new_user.username}")
 
-            EmailService.send_welcome_email(new_user, password)  # Ensure `new_user` is passed correctly
+            # Send welcome email
+            EmailService.send_welcome_email(new_user, password)  
             return redirect(url_for('main.index'))            
 
         except Exception as e:
             db.session.rollback()
             print(f"DEBUG: Registration error: {e}")
             return render_template('signup.html', message=f"❌ Registration failed: {str(e)}")
+
+    return render_template('signup.html')
 
 # Leaderboard Route
 @main.route('/leaderboard')
