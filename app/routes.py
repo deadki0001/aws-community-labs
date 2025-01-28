@@ -238,6 +238,17 @@ def login():
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')
+# Logout Route
+@main.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('main.login'))
+
+# Debugging: Print available routes
+@main.route('/debug-routes')
+def debug_routes():
+    routes = [rule.endpoint for rule in main.url_map.iter_rules()]
+    return jsonify({"routes": routes})
 # Route for validating a challenge command
 @main.route('/validate', methods=['POST'])
 def validate_command():

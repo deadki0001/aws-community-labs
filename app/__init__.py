@@ -1,23 +1,18 @@
-# __init__.py
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-import os
 
 # Define the global `db` instance
 db = SQLAlchemy()
+
+# Initialize Mail extension
 mail = Mail()
 
 def create_app():
     app = Flask(__name__, static_folder='static')
-    
-    # Get the absolute path to the application directory
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    
-    # Configure SQLite database
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
+
     # Set the secret key
     app.config['SECRET_KEY'] = 'dev-secret-key'
 
@@ -33,17 +28,15 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
-    
+
+    # Import and register blueprints
+    from app.routes import main
+    app.register_blueprint(main, url_prefix='/')
+
+    # Debugging: Print all registered routes
     with app.app_context():
-        # Import models and create tables
-        from . import models
-        db.create_all()
-        
-        # Initialize challenges
-        models.initialize_challenges()
-        
-        # Import and register blueprints
-        from .routes import main
-        app.register_blueprint(main)
+        print("Registered Routes:")
+        for rule in app.url_map.iter_rules():
+            print(rule)
 
     return app
