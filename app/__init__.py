@@ -14,11 +14,12 @@ def create_app():
     # Basic Flask configuration
     app.config['SECRET_KEY'] = 'dev-secret-key'
 
-    # MySQL configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@localhost/aws_cli_platform'
+    # MySQL configuration (use pymysql)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/aws_cli_platform'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL debugging
 
-    # Email configuration
+    # Email configuration (Use environment variable for security)
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_SSL'] = True
@@ -32,15 +33,15 @@ def create_app():
     mail.init_app(app)
     migrate.init_app(app, db)
 
-    # Import models here to avoid circular imports
+    # Import models
     from app.models import User, Challenge, Score, initialize_challenges
     
-    # Create tables and initialize data
+    # Apply migrations and initialize data
     with app.app_context():
-        db.create_all()
+        upgrade()  # Apply database migrations
         initialize_challenges()
 
-    # Import and register blueprints
+    # Register blueprints
     from app.routes import main
     app.register_blueprint(main)
 
