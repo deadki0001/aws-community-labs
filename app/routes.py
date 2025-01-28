@@ -46,9 +46,9 @@ def signup():
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-        # ✅ Fix: Create a new user and set the hashed password
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)  # ✅ Hash the password correctly
+        # ✅ FIX: Create a new user and set the hashed password
+        new_user = User(username=username, email=email)  
+        new_user.set_password(password)  # ✅ Correct way to store hashed password
 
         db.session.add(new_user)
 
