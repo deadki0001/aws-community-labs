@@ -7,6 +7,7 @@ from sqlalchemy.event import listens_for
 
 
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=True, unique=True)
@@ -19,8 +20,8 @@ class User(db.Model):
 
     # Relationships
     scores = db.relationship('Score', back_populates='user',
-                             cascade='all, delete-orphan',
-                             lazy='dynamic')
+                           cascade='all, delete-orphan',
+                           lazy='dynamic')
 
     def __init__(self, username, email, password=None):
         """Initialize a new user instance with a hashed password."""
@@ -80,16 +81,13 @@ class User(db.Model):
 
     
 class Challenge(db.Model):
-    """Challenge model for storing challenge-related data."""
+    __tablename__ = 'challenge'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(120), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=False)
     solution = db.Column(db.String(255), nullable=False)
-    points = db.Column(db.Integer, default=10)  # Default points for each challenge
-
-    def __repr__(self):
-        return f'<Challenge {self.name}>'
-
+    points = db.Column(db.Integer, default=10)
+    
     # Relationships
     scores = db.relationship('Score', back_populates='challenge',
                            cascade='all, delete-orphan',
@@ -98,13 +96,14 @@ class Challenge(db.Model):
     def __repr__(self):
         return f'<Challenge {self.name}>'
 
+
 class Score(db.Model):
-    """Score model for tracking user progress on challenges."""
+    __tablename__ = 'score'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     challenge_id = db.Column(db.Integer, db.ForeignKey('challenge.id'), nullable=False)
     score = db.Column(db.Integer, default=0)
-    completed_at = db.Column(db.DateTime, server_default=db.func.now())
+    completed_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
     user = db.relationship('User', back_populates='scores')
@@ -113,52 +112,64 @@ class Score(db.Model):
     # Constraints
     __table_args__ = (
         CheckConstraint('score >= 0', name='check_score_positive'),
+        Index('idx_user_challenge', 'user_id', 'challenge_id', unique=True)
     )
 
     def __repr__(self):
         return f'<Score User:{self.user_id}, Challenge:{self.challenge_id}, Score:{self.score}>'
 
+@listens_for(User, 'before_insert')
+def hash_password_if_needed(mapper, connection, target):
+    """Ensure password is hashed before inserting new user."""
+    if target.password and not target.password.startswith('pbkdf2:sha256'):
+        target.password = generate_password_hash(target.password)
+
 def initialize_challenges():
-    """Ensure all challenges exist in the database."""
-    existing_challenges = {challenge.name for challenge in Challenge.query.all()}
-
-    initial_challenges = [
-        Challenge(
-            name='Create a VPC',
-            description='Use the AWS CLI to create a new VPC.',
-            solution='aws ec2 create-vpc'
-        ) if 'Create a VPC' not in existing_challenges else None,
-        Challenge(
-            name='Create an RDS Instance',
-            description='Use the AWS CLI to create an RDS instance.',
-            solution='aws rds create-db-instance'
-        ) if 'Create an RDS Instance' not in existing_challenges else None,
-        Challenge(
-            name='Create a Security Group',
-            description='Use the AWS CLI to create a security group.',
-            solution='aws ec2 create-security-group'
-        ) if 'Create a Security Group' not in existing_challenges else None,
-        Challenge(
-            name='Create an IAM User',
-            description='Use the AWS CLI to create a new IAM user.',
-            solution='aws iam create-user --user-name'
-        ) if 'Create an IAM User' not in existing_challenges else None,
-        Challenge(
-            name='Launch an EC2 instance',
-            description='Use the AWS CLI to launch an EC2 instance.',
-            solution='aws ec2 run-instances'
-        ) if 'Launch an EC2 instance' not in existing_challenges else None,
-    ]
-
-    initial_challenges = [c for c in initial_challenges if c]
-
-    if initial_challenges:
-        db.session.add_all(initial_challenges)
-        db.session.commit()
-        print("Challenges added successfully.")
-
-        app = create_app() 
+    """Initialize challenges if they don't exist"""
+    try:
+        existing_challenges = {challenge.name for challenge in Challenge.query.all()}
         
-        with app.app_context():
-            from app.models import initialize_challenges
-            initialize_challenges()  # ✅ Now runs inside the Flask app context
+        challenges_to_add = [
+            {
+                'name': 'Create a VPC',
+                'description': 'Use the AWS CLI to create a new VPC.',
+                'solution': 'aws ec2 create-vpc'
+            },
+            {
+                'name': 'Create an RDS Instance',
+                'description': 'Use the AWS CLI to create an RDS instance.',
+                'solution': 'aws rds create-db-instance'
+            },
+            {
+                'name': 'Create a Security Group',
+                'description': 'Use the AWS CLI to create a security group.',
+                'solution': 'aws ec2 create-security-group'
+            },
+            {
+                'name': 'Create an IAM User',
+                'description': 'Use the AWS CLI to create a new IAM user.',
+                'solution': 'aws iam create-user --user-name'
+            },
+            {
+                'name': 'Launch an EC2 instance',
+                'description': 'Use the AWS CLI to launch an EC2 instance.',
+                'solution': 'aws ec2 run-instances'
+            },
+            {
+                'name': 'Create an S3 Bucket',
+                'description': 'Use the AWS CLI to Create an S3 Bucket.',
+                'solution': 'aws s3 mb'
+            }
+        ]
+        
+        for challenge_data in challenges_to_add:
+            if challenge_data['name'] not in existing_challenges:
+                new_challenge = Challenge(**challenge_data)
+                db.session.add(new_challenge)
+        
+        db.session.commit()
+        print("Successfully initialized challenges")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error initializing challenges: {e}")
