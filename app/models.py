@@ -23,6 +23,12 @@ class User(db.Model):
                            cascade='all, delete-orphan',
                            lazy='dynamic')
 
+    def __init__(self, username, password, email=None):
+        """Initialize a new user instance."""
+        self.username = username
+        self.email = email
+        self.set_password(password)
+
     def set_password(self, password):
         """Hash and set the user's password."""
         self.password = generate_password_hash(password)
