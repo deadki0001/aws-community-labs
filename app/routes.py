@@ -228,8 +228,7 @@ def login():
         print(f"User found: {user}")  # Debug line
         
         if user and password:
-            print(f"Comparing passwords - Entered: {password}, Stored: {user.password}")  # Debug line
-            if user.password == password:
+            if check_password_hash(user.password, password):
                 print("Password match successful")  # Debug line
                 session['user_id'] = user.id
                 return redirect(url_for('main.index'))
