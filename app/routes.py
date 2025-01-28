@@ -31,40 +31,34 @@ def index():
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        # Get user input and normalize case
         username = request.form.get('username', '').strip().lower()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
-        # Validate input: Ensure all fields are provided
         if not username or not email or not password:
             return render_template('signup.html', message="❌ All fields are required.")
 
-        # Check if username already exists (case insensitive)
         if User.query.filter(db.func.lower(User.username) == username).first():
             return render_template('signup.html', message="❌ Username already exists.")
 
-        # Check if email already exists (case insensitive)
         if User.query.filter(db.func.lower(User.email) == email).first():
             return render_template('signup.html', 
                                    message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
                                    show_forgot_password=True)
 
-
-
-        # Create new user with hashed password
+        # Create new user
         new_user = User(username=username, email=email)
-        new_user.set_password(password)  # Store hashed passw
+        new_user.set_password(password)
+
+        db.session.add(new_user)
+        
         try:
             db.session.commit()
-            session['user_id'] = new_user.id  # Log in the user after signup
+            print(f"DEBUG: User created successfully - ID: {new_user.id}, Username: {new_user.username}, Email: {new_user.email}")
 
-            print(f"DEBUG: new_user = {new_user}, email = {new_user.email}, username = {new_user.username}")
-
-            # Send welcome email
+            session['user_id'] = new_user.id  # Log in the user
             EmailService.send_welcome_email(new_user, password)
-            return redirect(url_for('main.index'))            
-
+            return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
             print(f"DEBUG: Registration error: {e}")
@@ -217,21 +211,19 @@ def reset_password(token):
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form.get('username', '').strip().lower()
+        password = request.form.get('password', '')
+
+        print(f"DEBUG: Login attempt for username: {username}")
+
+        user = User.query.filter(db.func.lower(User.username) == username).first()
         
-        print(f"Login attempt for username: {username}")  # Debug line
-        
-        user = User.query.filter_by(username=username).first()
-        print(f"User found: {user}")  # Debug line
-        
-        if user and password:
-            if check_password_hash(user.password, password):
-                print("Password match successful")  # Debug line
-                session['user_id'] = user.id
-                return redirect(url_for('main.index'))
-            else:
-                print("Password mismatch")  # Debug line
+        print(f"DEBUG: User found: {user}")
+
+        if user and user.check_password(password):
+            session['user_id'] = user.id
+            print(f"DEBUG: Login successful, session user_id = {session['user_id']}")
+            return redirect(url_for('main.index'))
         
         return render_template('login.html', message="❌ Invalid username or password.")
 
