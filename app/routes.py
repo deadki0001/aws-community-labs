@@ -313,6 +313,7 @@ def start_lab_session():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 # Debugging: Print available routes
 @main.route('/debug-routes')
 def debug_routes():
