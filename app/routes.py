@@ -256,18 +256,19 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('main.login'))
 
+## Starting Lab Sessions
+
 @main.route('/start-lab-session')
 def start_lab_session():
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in"}), 401
     
     try:
-        # Create a session token
         sts = boto3.client('sts')
-        
-        # Assume the sandbox role
+
+        # Assume the sandbox role with session tags
         response = sts.assume_role(
-            RoleArn=f"arn:aws:iam::010526269452:role/SandboxUserRole",
+            RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
             Tags=[
                 {'Key': 'LabSession', 'Value': 'active'},
@@ -275,14 +276,39 @@ def start_lab_session():
             ],
             DurationSeconds=3600  # 1 hour
         )
-        
-        return jsonify({
-            'accessKeyId': response['Credentials']['AccessKeyId'],
-            'secretAccessKey': response['Credentials']['SecretAccessKey'],
-            'sessionToken': response['Credentials']['SessionToken'],
-            'expiration': response['Credentials']['Expiration'].isoformat()
+
+        # Extract temporary credentials
+        credentials = response['Credentials']
+        access_key = credentials['AccessKeyId']
+        secret_key = credentials['SecretAccessKey']
+        session_token = credentials['SessionToken']
+
+        # Generate sign-in token from AWS federation endpoint
+        signin_token_url = "https://signin.aws.amazon.com/federation"
+        session_json = json.dumps({
+            "sessionId": access_key,
+            "sessionKey": secret_key,
+            "sessionToken": session_token
         })
         
+        signin_token_response = requests.get(
+            signin_token_url,
+            params={
+                "Action": "getSigninToken",
+                "Session": session_json
+            }
+        )
+        signin_token = signin_token_response.json().get("SigninToken")
+
+        if not signin_token:
+            return jsonify({"error": "Failed to generate AWS sign-in token"}), 500
+
+        # Construct AWS Console Login URL
+        console_url = f"https://signin.aws.amazon.com/federation?Action=login&Issuer=AWSCLI-LearningPlatform&Destination=https%3A%2F%2Fconsole.aws.amazon.com%2F&SigninToken={signin_token}"
+
+        # Redirect to AWS Console
+        return redirect(console_url)
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
