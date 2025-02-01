@@ -98,7 +98,7 @@ def signup():
 
     return render_template('signup.html')
 
-# Leaderboard Route
+# Leaderboard Route - ok
 @main.route('/leaderboard')
 def leaderboard():
     if 'user_id' not in session:
