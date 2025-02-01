@@ -262,46 +262,66 @@ def logout():
 
 @main.route('/start-lab-session')
 def start_lab_session():
-    if 'user_id' not in session:  # Changed from flask_session to session
-        return redirect(url_for('main.login'))  # Redirect to login if not authenticated
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
     
     try:
-        # Explicitly create a fresh boto3 session
-        aws_session = boto3.Session()
-        sts = aws_session.client('sts')
+        # Instead of assuming a role, we'll use environment variables
+        access_key = os.environ.get('AWS_LAB_ACCESS_KEY_ID')
+        secret_key = os.environ.get('AWS_LAB_SECRET_ACCESS_KEY')
+        
+        if not access_key or not secret_key:
+            return jsonify({"error": "Lab environment credentials not configured"}), 500
 
-        # Assume the SandboxUserRole
-        response = sts.assume_role(
-            RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
-            RoleSessionName=f"user-{session['user_id']}",  # Changed from flask_session to session
-            Tags=[
-                {'Key': 'LabSession', 'Value': 'active'},
-                {'Key': 'UserID', 'Value': str(session['user_id'])}  # Changed from flask_session to session
-            ],
-            DurationSeconds=3600
-        )
-
-        # Extract credentials
-        credentials = response['Credentials']
-        access_key = credentials['AccessKeyId']
-        secret_key = credentials['SecretAccessKey']
-        session_token = credentials['SessionToken']
-
-        # Set environment variables to ensure the role is used
-        boto3.setup_default_session(
+        # Create a session with the lab credentials
+        aws_session = boto3.Session(
             aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            aws_session_token=session_token
+            aws_secret_access_key=secret_key
         )
 
-        # Generate sign-in token
-        signin_token_url = "https://signin.aws.amazon.com/federation"
+        # Generate federation token for console access
+        sts = aws_session.client('sts')
+        federation_token = sts.get_federation_token(
+            Name=f"LabUser-{session['user_id']}",
+            DurationSeconds=3600,
+            Policy=json.dumps({
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "ec2:Describe*",
+                            "ec2:CreateVpc",
+                            "ec2:CreateSubnet",
+                            "ec2:CreateTags",
+                            "ec2:RunInstances",
+                            "rds:CreateDBInstance",
+                            "rds:Describe*",
+                            "s3:CreateBucket",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {
+                                "aws:RequestedRegion": "us-west-2"
+                            }
+                        }
+                    }
+                ]
+            })
+        )
+
+        # Extract temporary credentials from the federation token
+        temp_credentials = federation_token['Credentials']
+        
+        # Generate sign-in token for console access
         session_json = json.dumps({
-            "sessionId": access_key,
-            "sessionKey": secret_key,
-            "sessionToken": session_token
+            "sessionId": temp_credentials['AccessKeyId'],
+            "sessionKey": temp_credentials['SecretAccessKey'],
+            "sessionToken": temp_credentials['SessionToken']
         })
         
+        signin_token_url = "https://signin.aws.amazon.com/federation"
         signin_token_response = requests.get(
             signin_token_url,
             params={
@@ -309,19 +329,26 @@ def start_lab_session():
                 "Session": session_json
             }
         )
+        
         signin_token = signin_token_response.json().get("SigninToken")
-
+        
         if not signin_token:
             return jsonify({"error": "Failed to generate AWS sign-in token"}), 500
 
-        # Construct AWS Console Login URL
-        console_url = f"https://signin.aws.amazon.com/federation?Action=login&Issuer=AWSCLI-LearningPlatform&Destination=https%3A%2F%2Fconsole.aws.amazon.com%2F&SigninToken={signin_token}"
+        # Construct console URL with region parameter
+        console_url = (
+            f"https://signin.aws.amazon.com/federation"
+            f"?Action=login"
+            f"&Issuer=AWSCLI-LearningPlatform"
+            f"&Destination=https%3A%2F%2Fus-west-2.console.aws.amazon.com%2F"
+            f"&SigninToken={signin_token}"
+        )
 
-        # Redirect the user to AWS Console
         return redirect(console_url)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Lab session error: {str(e)}")  # Log the error
+        return jsonify({"error": "Failed to start lab session. Please try again later."}), 500
     
 # Debugging: Print available routes
 @main.route('/debug-routes')
