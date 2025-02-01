@@ -266,9 +266,11 @@ def start_lab_session():
         return redirect(url_for('main.login'))  # Redirect to login if not authenticated
     
     try:
-        sts = boto3.client('sts')
+        # Explicitly create a fresh boto3 session
+        session = boto3.Session()
+        sts = session.client('sts')
 
-        # Assume the role with session tags
+        # Assume the SandboxUserRole
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
@@ -276,7 +278,7 @@ def start_lab_session():
                 {'Key': 'LabSession', 'Value': 'active'},
                 {'Key': 'UserID', 'Value': str(session['user_id'])}
             ],
-            DurationSeconds=3600  # 1 hour
+            DurationSeconds=3600
         )
 
         # Extract credentials
@@ -284,6 +286,13 @@ def start_lab_session():
         access_key = credentials['AccessKeyId']
         secret_key = credentials['SecretAccessKey']
         session_token = credentials['SessionToken']
+
+        # Set environment variables to ensure the role is used
+        boto3.setup_default_session(
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            aws_session_token=session_token
+        )
 
         # Generate sign-in token
         signin_token_url = "https://signin.aws.amazon.com/federation"
