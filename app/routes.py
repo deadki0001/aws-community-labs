@@ -49,20 +49,17 @@ def login():
     return render_template('login.html')
 
 
-@main.route('/landing')
-def landing():
+@main.route('/labs')
+def labs():
     if 'user_id' not in session:
-        print("No user_id in session, redirecting to login")  # Debug log
         return redirect(url_for('main.login'))
     
     user = User.query.get(session['user_id'])
     if not user:
-        print(f"No user found for id {session['user_id']}, clearing session")  # Debug log
         session.clear()
         return redirect(url_for('main.login'))
     
-    print(f"Rendering landing page for user {user.username}")  # Debug log
-    return render_template('landing_page.html')
+    return render_template('hands_on_labs.html')
 
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])

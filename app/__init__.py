@@ -18,24 +18,23 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Set the secret key
-    app.config['SECRET_KEY'] = 'dev-secret-key'
+    # Set the secret key from environment variable or use a default for development
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
 
     # Session configuration
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
-    app.config['SESSION_COOKIE_SECURE'] = True  # For HTTPS
+    app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'    
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
     # Email configuration
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_SSL'] = True
     app.config['MAIL_DEBUG'] = True
-    app.config['MAIL_USERNAME'] = "no-reply@deadkithedeveloper.click"
-    app.config['MAIL_PASSWORD'] = "Awsapp123!@#!"
-    app.config['MAIL_DEFAULT_SENDER'] = "no-reply@deadkithedeveloper.click"
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', "no-reply@deadkithedeveloper.click")
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', "Awsapp123!@#!")
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', "no-reply@deadkithedeveloper.click")
 
     # Initialize extensions
     db.init_app(app)
@@ -44,5 +43,10 @@ def create_app():
     # Import and register blueprints
     from app.routes import main
     app.register_blueprint(main)
+
+    # Add basic health check route
+    @app.route('/health')
+    def health_check():
+        return 'OK', 200
 
     return app
