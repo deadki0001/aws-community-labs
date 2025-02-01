@@ -26,7 +26,19 @@ def index():
         return redirect(url_for('main.signup'))
     
     print(f"Rendering landing page for user {user.username}")  # Debug log
-    return render_template('landing.html')
+    return render_template('landing_page.html')
+
+@main.route('/challenges')
+def challenges():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        return redirect(url_for('main.login'))
+    
+    return render_template('challenges.html')
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -41,13 +53,12 @@ def login():
             session['user_id'] = user.id
             session.permanent = True  # Make session persistent
             print(f"Login successful for user {username}")  # Debug log
-            return redirect(url_for('main.landing'))  # Changed to redirect to landing
+            return redirect(url_for('main.index'))  # Redirects to landing_page.html
         
         print("Login failed: invalid credentials")  # Debug log
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')
-
 
 @main.route('/labs')
 def labs():
@@ -76,8 +87,8 @@ def signup():
         # Check if email already exists
         if User.query.filter_by(email=email).first():
             return render_template('signup.html', 
-                                   message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
-                                   show_forgot_password=True)
+                               message="❌ Email already registered. Click 'Forgot Password' to recover your account.", 
+                               show_forgot_password=True)
 
         new_user = User(username=username, password=password, email=email)
         db.session.add(new_user)
@@ -87,11 +98,11 @@ def signup():
             # Send welcome email
             EmailService.send_welcome_email(new_user, password)
             session['user_id'] = new_user.id
-            return redirect(url_for('main.landing'))  # Changed to redirect to landing
+            return redirect(url_for('main.index'))  # Redirects to landing_page.html
         except Exception as e:
             db.session.rollback()
             return render_template('signup.html', 
-                                   message=f"❌ Registration failed: {str(e)}")
+                               message=f"❌ Registration failed: {str(e)}")
 
     return render_template('signup.html')
 
