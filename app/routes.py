@@ -262,7 +262,7 @@ def logout():
 
 @main.route('/start-lab-session')
 def start_lab_session():
-    if 'user_id' not in flask_session:
+    if 'user_id' not in session:  # Changed from flask_session to session
         return redirect(url_for('main.login'))  # Redirect to login if not authenticated
     
     try:
@@ -273,10 +273,10 @@ def start_lab_session():
         # Assume the SandboxUserRole
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
-            RoleSessionName=f"user-{flask_session['user_id']}",
+            RoleSessionName=f"user-{session['user_id']}",  # Changed from flask_session to session
             Tags=[
                 {'Key': 'LabSession', 'Value': 'active'},
-                {'Key': 'UserID', 'Value': str(flask_session['user_id'])}
+                {'Key': 'UserID', 'Value': str(session['user_id'])}  # Changed from flask_session to session
             ],
             DurationSeconds=3600
         )

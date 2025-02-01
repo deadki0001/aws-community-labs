@@ -35,7 +35,22 @@
             font-size: 2rem;
         }
 
-        /* User Info Section */
+        /* Back Button Style - Updated to match hands-on-labs.html */
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Rest of the styles remain the same */
         .user-info-container {
             position: fixed;
             top: 10px;
@@ -55,33 +70,11 @@
         .user-info-container a:hover {
             text-decoration: underline;
         }
-
-        /* Challenges Section */
         .challenge-container {
             background: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
             padding: 2rem;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            margin-bottom: 1.5rem;
-        }
-        .validate-button {
-            background-color: #ff6f00;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .validate-button:hover {
-            background-color: #e65c00;
         }
         .challenge-grid {
             display: grid;
@@ -96,18 +89,28 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        /* Terminal Section */
+        .validate-button {
+            background-color: #ff6f00;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .validate-button:hover {
+            background-color: #e65c00;
+        }
         #terminal-container {
             width: 100%;
             height: 50vh;
-            color: rgb(0, 0, 0);	    
+            color: rgb(0, 0, 0);     
             background: #000;
             border-radius: 10px;
             overflow: hidden;
             margin-top: 2rem;
         }
-
-        /* Background Animation */
         .background-animation {
             position: fixed;
             top: -50%;
@@ -119,12 +122,8 @@
             z-index: -1;
         }
         @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -136,7 +135,7 @@
         <a href="{{ url_for('main.logout') }}">Logout</a>
     </div>
     <div class="container">
-        <a href="{{ url_for('main.index') }}" class="back-button">&larr; Back to Dashboard</a>        
+        <a href="{{ url_for('main.index') }}" class="back-button">← Back to Dashboard</a>
         <h1>{{ message }}</h1>
         <div class="challenge-container">
             <h2>Challenges</h2>
@@ -176,4 +175,3 @@
     </script>
 </body>
 </html>
-
