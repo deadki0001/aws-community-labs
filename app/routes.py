@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from app.models import User, Challenge, Score
 from app import db
 import os
+import requests
 import secrets
 from app.email_utils import EmailService
 from datetime import datetime
