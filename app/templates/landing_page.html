@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS CLI Learning Platform</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #1a73e8, #ff6f00);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Card Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #ff6f00;
+            margin-bottom: 1rem;
+        }
+
+        .card p {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .card-button {
+            background: #ff6f00;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .card-button:hover {
+            background: #e65c00;
+        }
+
+        /* User Info */
+        .user-info {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+        }
+
+        .user-info a {
+            color: #ff6f00;
+            text-decoration: none;
+            margin-left: 1rem;
+        }
+
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Background Animation */
+        .background-animation {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent 70%);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <div class="user-info">
+        <span id="user-info"></span>
+        <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+        <a href="{{ url_for('main.logout') }}">Logout</a>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Welcome to AWS CLI Learning Platform</h1>
+            <p>Choose your learning path</p>
+        </header>
+
+        <div class="card-grid">
+            <div class="card">
+                <h2>Hands-On Labs</h2>
+                <p>Get practical experience with AWS CLI through guided hands-on labs. Practice creating real AWS resources in a sandbox environment.</p>
+                <a href="{{ url_for('main.labs') }}" class="card-button">Start Labs</a>
+            </div>
+
+            <div class="card">
+                <h2>CLI Challenges</h2>
+                <p>Test your AWS CLI knowledge with interactive challenges. Complete tasks and earn points to track your progress.</p>
+                <a href="{{ url_for('main.challenges') }}" class="card-button">View Challenges</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/user_info')
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    const userInfoElement = document.getElementById('user-info');
+                    userInfoElement.innerHTML = `
+                        <strong>${data.username}</strong> | Score: ${data.total_score}
+                    `;
+                }
+            })
+            .catch(err => console.error('Error fetching user info:', err));
+    </script>
+</body>
+</html>

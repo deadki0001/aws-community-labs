@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hands-On Labs | AWS CLI Learning Platform</title>
+    <style>
+        /* Include the same base styles as landing page */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #1a73e8, #ff6f00);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Lab specific styles */
+        .lab-card {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .lab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .lab-title {
+            font-size: 1.5rem;
+            color: #ff6f00;
+        }
+
+        .lab-duration {
+            background: rgba(255, 111, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .lab-description {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .lab-steps {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .lab-steps h3 {
+            color: #ff6f00;
+            margin-bottom: 1rem;
+        }
+
+        .lab-steps ol {
+            margin-left: 1.5rem;
+        }
+
+        .lab-steps li {
+            margin-bottom: 0.5rem;
+        }
+
+        .start-lab-btn {
+            background: #ff6f00;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .start-lab-btn:hover {
+            background: #e65c00;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Add the same background animation as landing page */
+        .background-animation {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent 70%);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <div class="container">
+        <a href="{{ url_for('main.index') }}" class="back-button">← Back to Dashboard</a>
+        
+        <div class="lab-card">
+            <div class="lab-header">
+                <h2 class="lab-title">Launch Your First EC2 Instance</h2>
+                <span class="lab-duration">Duration: 1 hour</span>
+            </div>
+            
+            <div class="lab-description">
+                <p>In this hands-on lab, you'll learn how to launch an EC2 instance using the AWS CLI. You'll be provided with temporary AWS credentials to access a sandbox environment where you can practice creating real AWS resources.</p>
+            </div>
+            
+            <div class="lab-steps">
+                <h3>What you'll learn:</h3>
+                <ol>
+                    <li>How to configure AWS CLI credentials</li>
+                    <li>Creating a VPC for your EC2 instance</li>
+                    <li>Launching a t2.micro EC2 instance</li>
+                    <li>Verifying your instance status</li>
+                    <li>Cleaning up resources</li>
+                </ol>
+            </div>
+
+            <button onclick="startLab()" class="start-lab-btn">Start Lab Session</button>
+        </div>
+    </div>
+
+    <script>
+        function startLab() {
+            fetch('/start-lab-session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    // Show credentials modal
+                    const modal = document.createElement('div');
+                    modal.innerHTML = `
+                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                                    background: rgba(0, 0, 0, 0.95); padding: 2rem; border-radius: 15px;
+                                    max-width: 600px; width: 90%;">
+                            <h3 style="color: #ff6f00;">AWS Credentials</h3>
+                            <p>Use these temporary credentials to access the AWS CLI:</p>
+                            <pre style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 5px;">
+export AWS_ACCESS_KEY_ID=${data.accessKeyId}
+export AWS_SECRET_ACCESS_KEY=${data.secretAccessKey}
+export AWS_SESSION_TOKEN=${data.sessionToken}
+                            </pre>
+                            <p style="color: #ff6f00;">These credentials will expire in 1 hour.</p>
+                            <button onclick="this.parentElement.remove()" 
+                                    style="background: #ff6f00; border: none; color: white; 
+                                           padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to start lab session. Please try again.');
+                });
+        }
+    </script>
+</body>
+</html>

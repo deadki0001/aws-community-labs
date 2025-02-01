@@ -15,16 +15,15 @@ main = Blueprint('main', __name__)
 # Route for the homepage
 @main.route('/')
 def index():
-    if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user:  # Ensure user exists in the database
-            challenges = Challenge.query.all()
-            return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
-        else:
-            # If the user ID is invalid, clear the session and redirect to signup
-            session.pop('user_id', None)
-            return redirect(url_for('main.signup'))
-    return redirect(url_for('main.signup'))
+    if 'user_id' not in session:
+        return redirect(url_for('main.signup'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.pop('user_id', None)
+        return redirect(url_for('main.signup'))
+    
+    return render_template('landing.html', username=user.username)
 
 
 # Route for the sign-up page
@@ -221,6 +220,36 @@ def login():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('main.login'))
+
+@main.route('/start-lab-session')
+def start_lab_session():
+    if 'user_id' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+    
+    try:
+        # Create a session token
+        sts = boto3.client('sts')
+        
+        # Assume the sandbox role
+        response = sts.assume_role(
+            RoleArn=f"arn:aws:iam::014104022651:role/SandboxUserRole",
+            RoleSessionName=f"user-{session['user_id']}",
+            Tags=[
+                {'Key': 'LabSession', 'Value': 'active'},
+                {'Key': 'UserID', 'Value': str(session['user_id'])}
+            ],
+            DurationSeconds=3600  # 1 hour
+        )
+        
+        return jsonify({
+            'accessKeyId': response['Credentials']['AccessKeyId'],
+            'secretAccessKey': response['Credentials']['SecretAccessKey'],
+            'sessionToken': response['Credentials']['SessionToken'],
+            'expiration': response['Credentials']['Expiration'].isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Debugging: Print available routes
 @main.route('/debug-routes')
