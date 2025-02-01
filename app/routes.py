@@ -273,12 +273,8 @@ def start_lab_session():
         # Assume the SandboxUserRole
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
-            RoleSessionName=f"user-{session['user_id']}",  # Changed from flask_session to session
-            Tags=[
-                {'Key': 'LabSession', 'Value': 'active'},
-                {'Key': 'UserID', 'Value': str(session['user_id'])}  # Changed from flask_session to session
-            ],
-            DurationSeconds=3600
+            RoleSessionName=f"user-{session['user_id']}",
+            DurationSeconds=300
         )
 
         # Extract credentials
