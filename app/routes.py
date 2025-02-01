@@ -274,7 +274,7 @@ def start_lab_session():
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
-            DurationSeconds=300
+            DurationSeconds=900
         )
 
         # Extract credentials
