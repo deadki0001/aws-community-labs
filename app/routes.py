@@ -9,6 +9,7 @@ from datetime import datetime
 from flask_mail import Message
 from app import mail
 from sqlalchemy import func
+import boto3
 
 main = Blueprint('main', __name__)
 
@@ -37,8 +38,10 @@ def challenges():
     if not user:
         session.clear()
         return redirect(url_for('main.login'))
-    
-    return render_template('challenges.html')
+
+    challenges = Challenge.query.all()  # Fetch all challenges from the database
+    return render_template('challenges.html', challenges=challenges)
+
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
