@@ -267,7 +267,7 @@ def start_lab_session():
         
         # Assume the sandbox role
         response = sts.assume_role(
-            RoleArn=f"arn:aws:iam::014104022651:role/SandboxUserRole",
+            RoleArn=f"arn:aws:iam::010526269452:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
             Tags=[
                 {'Key': 'LabSession', 'Value': 'active'},
