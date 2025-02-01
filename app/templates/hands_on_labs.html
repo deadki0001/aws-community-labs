@@ -153,41 +153,7 @@
 
     <script>
         function startLab() {
-            fetch('/start-lab-session')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-                    
-                    // Show credentials modal
-                    const modal = document.createElement('div');
-                    modal.innerHTML = `
-                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                                    background: rgba(0, 0, 0, 0.95); padding: 2rem; border-radius: 15px;
-                                    max-width: 600px; width: 90%;">
-                            <h3 style="color: #ff6f00;">AWS Credentials</h3>
-                            <p>Use these temporary credentials to access the AWS CLI:</p>
-                            <pre style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 5px;">
-export AWS_ACCESS_KEY_ID=${data.accessKeyId}
-export AWS_SECRET_ACCESS_KEY=${data.secretAccessKey}
-export AWS_SESSION_TOKEN=${data.sessionToken}
-                            </pre>
-                            <p style="color: #ff6f00;">These credentials will expire in 1 hour.</p>
-                            <button onclick="this.parentElement.remove()" 
-                                    style="background: #ff6f00; border: none; color: white; 
-                                           padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
-                                Close
-                            </button>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to start lab session. Please try again.');
-                });
+            window.location.href = "/start-lab-session";  // Redirect the entire page
         }
     </script>
 </body>

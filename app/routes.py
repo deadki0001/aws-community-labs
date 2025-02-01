@@ -263,12 +263,12 @@ def logout():
 @main.route('/start-lab-session')
 def start_lab_session():
     if 'user_id' not in session:
-        return jsonify({"error": "Not logged in"}), 401
+        return redirect(url_for('main.login'))  # Redirect to login if not authenticated
     
     try:
         sts = boto3.client('sts')
 
-        # Assume the sandbox role with session tags
+        # Assume the role with session tags
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
@@ -279,13 +279,13 @@ def start_lab_session():
             DurationSeconds=3600  # 1 hour
         )
 
-        # Extract temporary credentials
+        # Extract credentials
         credentials = response['Credentials']
         access_key = credentials['AccessKeyId']
         secret_key = credentials['SecretAccessKey']
         session_token = credentials['SessionToken']
 
-        # Generate sign-in token from AWS federation endpoint
+        # Generate sign-in token
         signin_token_url = "https://signin.aws.amazon.com/federation"
         session_json = json.dumps({
             "sessionId": access_key,
@@ -308,12 +308,11 @@ def start_lab_session():
         # Construct AWS Console Login URL
         console_url = f"https://signin.aws.amazon.com/federation?Action=login&Issuer=AWSCLI-LearningPlatform&Destination=https%3A%2F%2Fconsole.aws.amazon.com%2F&SigninToken={signin_token}"
 
-        # Redirect to AWS Console
+        # Redirect the user to AWS Console
         return redirect(console_url)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 # Debugging: Print available routes
 @main.route('/debug-routes')
 def debug_routes():
