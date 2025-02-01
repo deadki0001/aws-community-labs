@@ -20,7 +20,7 @@ def index():
         user = User.query.get(session['user_id'])
         if user:  # Ensure user exists in the database
             challenges = Challenge.query.all()
-            return render_template('index.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
+            return render_template('challenges.html', challenges=challenges, message="Welcome to AWS CLI Learning Platform!", username=user.username)
         else:
             # If the user ID is invalid, clear the session and redirect to signup
             session.pop('user_id', None)
