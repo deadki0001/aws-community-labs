@@ -41,12 +41,28 @@ def login():
             session['user_id'] = user.id
             session.permanent = True  # Make session persistent
             print(f"Login successful for user {username}")  # Debug log
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.landing'))  # Changed to redirect to landing
         
         print("Login failed: invalid credentials")  # Debug log
         return render_template('login.html', message="❌ Invalid username or password.")
 
     return render_template('login.html')
+
+
+@main.route('/landing')
+def landing():
+    if 'user_id' not in session:
+        print("No user_id in session, redirecting to login")  # Debug log
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        print(f"No user found for id {session['user_id']}, clearing session")  # Debug log
+        session.clear()
+        return redirect(url_for('main.login'))
+    
+    print(f"Rendering landing page for user {user.username}")  # Debug log
+    return render_template('landing_page.html')
 
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])
@@ -74,7 +90,7 @@ def signup():
             # Send welcome email
             EmailService.send_welcome_email(new_user, password)
             session['user_id'] = new_user.id
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.landing'))  # Changed to redirect to landing
         except Exception as e:
             db.session.rollback()
             return render_template('signup.html', 
@@ -223,20 +239,6 @@ def reset_password(token):
 
     return render_template('reset_password.html')
 
-# Route for the login page
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        user = User.query.filter_by(username=username).first()
-        if user and user.password == password:
-            session['user_id'] = user.id
-            return redirect(url_for('main.index'))
-        return render_template('login.html', message="❌ Invalid username or password.")
-
-    return render_template('login.html')
 # Logout Route
 @main.route('/logout')
 def logout():
