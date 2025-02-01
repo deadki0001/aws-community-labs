@@ -16,15 +16,37 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if 'user_id' not in session:
+        print("No user_id in session, redirecting to signup")  # Debug log
         return redirect(url_for('main.signup'))
     
     user = User.query.get(session['user_id'])
     if not user:
-        session.pop('user_id', None)
+        print(f"No user found for id {session['user_id']}, clearing session")  # Debug log
+        session.clear()
         return redirect(url_for('main.signup'))
     
-    return render_template('landing.html', username=user.username)
+    print(f"Rendering landing page for user {user.username}")  # Debug log
+    return render_template('landing.html')
 
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        print(f"Login attempt for user: {username}")  # Debug log
+        
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
+            session['user_id'] = user.id
+            session.permanent = True  # Make session persistent
+            print(f"Login successful for user {username}")  # Debug log
+            return redirect(url_for('main.index'))
+        
+        print("Login failed: invalid credentials")  # Debug log
+        return render_template('login.html', message="❌ Invalid username or password.")
+
+    return render_template('login.html')
 
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])

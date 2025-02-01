@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
+from datetime import timedelta
 
 db = SQLAlchemy()
 mail = Mail()
@@ -19,6 +20,13 @@ def create_app():
 
     # Set the secret key
     app.config['SECRET_KEY'] = 'dev-secret-key'
+
+    # Session configuration
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+    app.config['SESSION_COOKIE_SECURE'] = True  # For HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'    
 
     # Email configuration
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
