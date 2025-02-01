@@ -262,21 +262,21 @@ def logout():
 
 @main.route('/start-lab-session')
 def start_lab_session():
-    if 'user_id' not in session:
+    if 'user_id' not in flask_session:
         return redirect(url_for('main.login'))  # Redirect to login if not authenticated
     
     try:
         # Explicitly create a fresh boto3 session
-        session = boto3.Session()
-        sts = session.client('sts')
+        aws_session = boto3.Session()
+        sts = aws_session.client('sts')
 
         # Assume the SandboxUserRole
         response = sts.assume_role(
             RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
-            RoleSessionName=f"user-{session['user_id']}",
+            RoleSessionName=f"user-{flask_session['user_id']}",
             Tags=[
                 {'Key': 'LabSession', 'Value': 'active'},
-                {'Key': 'UserID', 'Value': str(session['user_id'])}
+                {'Key': 'UserID', 'Value': str(flask_session['user_id'])}
             ],
             DurationSeconds=3600
         )
