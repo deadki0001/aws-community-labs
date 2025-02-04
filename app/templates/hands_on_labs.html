@@ -156,7 +156,8 @@
     <div class="background-animation"></div>
     
     <div class="container">
-        <a href="{{ url_for('main.hands_on_labs2') }}" class="nav-button">Next →</a>
+        <a href="{{ url_for('main.index') }}" class="nav-button">← Back to Dashboard</a>
+        
       
         <div class="lab-card">
             <div class="lab-header">
@@ -211,6 +212,7 @@
             </div>
 
             <button onclick="startLab()" class="start-lab-btn">Start Lab Session</button>
+            <a href="{{ url_for('main.hands_on_labs2') }}" class="nav-button">Next →</a>
         </div>
     </div>
 
