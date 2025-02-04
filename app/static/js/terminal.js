@@ -13,10 +13,28 @@ const term = new Terminal({
 term.open(document.getElementById('terminal-container'));
 
 // Enable full text selection for copying
-term.element.style.userSelect = 'text'; 
+term.element.style.userSelect = 'text';
 term.element.style.webkitUserSelect = 'text';
 term.element.style.msUserSelect = 'text';
 term.element.style.mozUserSelect = 'text';
+
+// Ensure Ctrl+C / Cmd+C actually copies text
+document.addEventListener('keydown', (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+        const selectedText = window.getSelection().toString().trim();
+        if (selectedText) {
+            navigator.clipboard.writeText(selectedText).then(() => {
+                console.log('Copied to clipboard:', selectedText);
+            }).catch(err => console.error('Clipboard copy failed:', err));
+        }
+    }
+});
+
+// Enable right-click to show native browser copy option
+term.element.addEventListener('contextmenu', (event) => {
+    event.preventDefault(); // Prevent default context menu
+    document.execCommand('copy'); // Copy selected text
+});
 
 // Make the white text box (xterm-helper-textarea) blacked out
 const textBox = document.querySelector('.xterm-helper-textarea');
@@ -26,24 +44,6 @@ if (textBox) {
     textBox.style.border = 'none';
     textBox.style.caretColor = 'transparent'; // Hide cursor
 }
-
-// Ensure copy (Ctrl+C / Cmd+C) works
-term.attachCustomKeyEventHandler((e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        return true; // Allow default copy behavior
-    }
-    return true;
-});
-
-// Handle mouse selection to prevent focus shift
-term.element.addEventListener('mouseup', () => {
-    if (window.getSelection().toString()) {
-        term.blur(); // Prevent unwanted focus shift
-    }
-});
-
-// Allow entire terminal area to be copyable
-document.querySelector('#terminal-container .xterm').style.userSelect = 'text';
 
 // Function to convert URLs to hyperlinks
 function convertUrlsToLinks(text) {
@@ -55,7 +55,7 @@ function convertUrlsToLinks(text) {
 
 // Initialize terminal with a clean state
 function initializeTerminal() {
-    term.reset(); 
+    term.reset();
     term.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to top-left
     term.write('$ '); // Display the prompt
 }
