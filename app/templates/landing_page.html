@@ -12,12 +12,15 @@
             background: linear-gradient(to bottom right, #1a73e8, #ff6f00);
             color: #fff;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            flex: 1;
         }
 
         /* Header Styles */
@@ -79,6 +82,21 @@
             background: #e65c00;
         }
 
+        .resource-links {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .resource-links a {
+            color: #ff6f00;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        .resource-links a:hover {
+            text-decoration: underline;
+        }
+
         /* User Info */
         .user-info {
             position: fixed;
@@ -97,6 +115,14 @@
 
         .user-info a:hover {
             text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.7);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         /* Background Animation */
@@ -140,11 +166,25 @@
 
             <div class="card">
                 <h2>CLI Challenges</h2>
-                <p>Test your AWS CLI knowledge with interactive challenges. Complete tasks and earn points to track your progress.</p>
+                <p>Test your AWS knowledge with interactive challenges. Complete tasks and earn points to track your progress.</p>
                 <a href="{{ url_for('main.challenges') }}" class="card-button">View Challenges</a>
+            </div>
+
+            <div class="card">
+                <h2>Docker & Kubernetes Playground</h2>
+                <p>Experiment with containers and orchestration in a live environment. Practice deploying and managing containerized applications.</p>
+                <a href="https://labs.play-with-k8s.com/" class="card-button">Launch Playground</a>
+                <div class="resource-links">
+                    <a href="https://kubernetes.io/docs/home/" target="_blank">Kubernetes Docs</a>
+                    <a href="https://docs.docker.com/" target="_blank">Docker Docs</a>
+                </div>
             </div>
         </div>
     </div>
+
+    <footer>
+        <p>Designed by DevonPatrick Adkins</p>
+    </footer>
 
     <script>
         fetch('/user_info')

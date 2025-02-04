@@ -14,7 +14,7 @@ class EmailService:
                         border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 20px;">
                 <p>Best regards,<br>
                 Devon Adkins<br>
-                <strong>AWS CLI Learning Platform</strong><br>
+                <strong>AWS Learning Platform</strong><br>
                 <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
                 📧 devon@deadkithedeveloper.click</p>
             </div>
@@ -26,8 +26,8 @@ class EmailService:
 
                 # Create the email message
                 msg = Message(
-                    subject="Welcome to AWS CLI Learning Platform! 🌟",
-                    sender=("Devon Adkins via AWS CLI Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
+                    subject="Welcome to the AWWS Learning Platform! 🌟",
+                    sender=("Devon Adkins via AWS Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
                     recipients=[user.email]  # ✅ Corrected
                 )
 
@@ -44,18 +44,18 @@ class EmailService:
 
                 📝 Please log in and change your password after your first login.
 
-                🌈 Challenges await you! Start your AWS CLI learning journey now.
+                🌈 Challenges await you! Start your AWS learning journey now.
 
                 🆘 If you have any issues, contact us at:
                 devon@deadkithedeveloper.click
 
                 🏆 Happy Learning!
-                AWS CLI Learning Platform Team 💻
+                AWS Learning Platform Team 💻
 
                 ---
                 Best regards,
                 Devon Adkins
-                AWS CLI Learning Platform
+                AWS Learning Platform
                 https://deadkithedeveloper.click
                 """
 
