@@ -6,36 +6,38 @@ const term = new Terminal({
         foreground: '#FFFFFF' // White text
     },
     rightClickSelectsWord: true, // Enable word selection on right-click
-    allowProposedApi: true, // Allow advanced API usage (optional)    
+    allowProposedApi: true // Allow advanced API usage
 });
 
 // Attach the terminal to the container
 term.open(document.getElementById('terminal-container'));
 
-// Allow text selection and copying
+// Enable full text selection for copying
+term.element.style.userSelect = 'text'; 
+term.element.style.webkitUserSelect = 'text';
+term.element.style.msUserSelect = 'text';
+term.element.style.mozUserSelect = 'text';
+
+// Ensure copy (Ctrl+C / Cmd+C) works
 term.attachCustomKeyEventHandler((e) => {
-    // Allow default browser behavior for copying (Ctrl+C / Cmd+C)
     if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        return true; // Let the browser handle copying
+        return true; // Allow default copy behavior
     }
-    return true; // Allow all other key events to pass through
+    return true;
 });
 
+// Handle mouse selection to prevent focus shift
 term.element.addEventListener('mouseup', () => {
     if (window.getSelection().toString()) {
-        // Disable focus shift if text is selected
-        term.blur();
+        term.blur(); // Prevent unwanted focus shift
     }
 });
 
-term.element.addEventListener('mousedown', (event) => {
-    // Allow default text selection behavior for single and double clicks
-    if (event.detail >= 2) {
-        // Let double-click for word selection work as usual
-        return;
-    }
-    term.focus(); // Keep the focus on the terminal for single clicks
-});
+// Fix the white box by making it black
+const textBox = document.querySelector('.white-box-selector'); // Replace with actual selector
+if (textBox) {
+    textBox.style.backgroundColor = '#000000';
+}
 
 // Function to convert URLs to hyperlinks
 function convertUrlsToLinks(text) {
@@ -47,26 +49,23 @@ function convertUrlsToLinks(text) {
 
 // Initialize terminal with a clean state
 function initializeTerminal() {
-    term.reset(); // Clear and reset terminal state
+    term.reset(); 
     term.write('\x1b[2J\x1b[H'); // Clear screen and move cursor to top-left
     term.write('$ '); // Display the prompt
 }
 
-// Call initializeTerminal to set up a clean environment
 initializeTerminal();
 
 // Global variables
-let inputBuffer = ''; // Store user input
-let commandHistory = []; // Store the command history
-let historyIndex = -1; // Track the position in the history
-let activeChallengeId = null; // Track the current active challenge
+let inputBuffer = '';
+let commandHistory = [];
+let historyIndex = -1;
+let activeChallengeId = null;
 
 // Function to start a challenge
 window.startChallenge = function (challengeId) {
     console.log(`Start Challenge invoked with challengeId: ${challengeId}`);
     activeChallengeId = challengeId;
-
-    // Clear the terminal for the new challenge
     term.clear();
     term.write(`Challenge ${challengeId} started: Enter your command below.\r\n$ `);
 };
@@ -76,93 +75,77 @@ term.onData((data) => {
     if (data === '\r') { // Enter key pressed
         if (inputBuffer.trim() === 'clear') {
             term.clear();
-            inputBuffer = ''; // Clear the input buffer
+            inputBuffer = '';
             return;
         }
 
         if (activeChallengeId) {
             console.log(`Command submitted: ${inputBuffer.trim()}, Challenge ID: ${activeChallengeId}`);
-            commandHistory.push(inputBuffer.trim()); // Save the command in history
-            historyIndex = -1; // Reset history index
+            commandHistory.push(inputBuffer.trim());
+            historyIndex = -1;
 
-            // Send the user command to the server for validation
             fetch('/validate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     command: inputBuffer.trim(),
-                    challenge_id: activeChallengeId,
-                }),
+                    challenge_id: activeChallengeId
+                })
             })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then((data) => {
-                    console.log('Response from /validate:', data);
-                    const formattedMessage = convertUrlsToLinks(data.message);
-                    term.write(formattedMessage.replace(/\n/g, '\r\n') + '\r\n$ ');
-                })
-                .catch((error) => {
-                    console.error('Error in fetch:', error);
-                    term.write(`\r\n❌ Error: ${error.message}\r\n$ `);
-                });
+            .then((response) => response.ok ? response.json() : Promise.reject(`HTTP error! Status: ${response.status}`))
+            .then((data) => {
+                console.log('Response from /validate:', data);
+                term.write(convertUrlsToLinks(data.message).replace(/\n/g, '\r\n') + '\r\n$ ');
+            })
+            .catch((error) => {
+                console.error('Error in fetch:', error);
+                term.write(`\r\n❌ Error: ${error.message}\r\n$ `);
+            });
 
-            inputBuffer = ''; // Clear the input buffer after submission
+            inputBuffer = '';
         } else {
             term.write('\r\n❌ No challenge selected. Click "Start Challenge" first.\r\n$ ');
         }
     } else if (data === '\u007F') { // Backspace key pressed
         if (inputBuffer.length > 0) {
             inputBuffer = inputBuffer.slice(0, -1);
-            term.write('\b \b'); // Remove the last character from the terminal display
+            term.write('\b \b');
         }
-    } else if (data === '\u001b[A') { // Up arrow key pressed
+    } else if (data === '\u001b[A') { // Up arrow key
         if (commandHistory.length > 0) {
-            if (historyIndex === -1) {
-                historyIndex = commandHistory.length; // Start from the latest command
-            }
+            if (historyIndex === -1) historyIndex = commandHistory.length;
             if (historyIndex > 0) {
                 historyIndex--;
                 inputBuffer = commandHistory[historyIndex];
-                term.write('\r\x1b[K$ ' + inputBuffer); // Clear the current line and display the command
+                term.write('\r\x1b[K$ ' + inputBuffer);
             }
         }
-    } else if (data === '\u001b[B') { // Down arrow key pressed
+    } else if (data === '\u001b[B') { // Down arrow key
         if (historyIndex !== -1) {
             historyIndex++;
-            if (historyIndex < commandHistory.length) {
-                inputBuffer = commandHistory[historyIndex];
-            } else {
-                inputBuffer = '';
-                historyIndex = -1; // Reset index if we go past the last command
-            }
-            term.write('\r\x1b[K$ ' + inputBuffer); // Clear the current line and display the command
+            inputBuffer = historyIndex < commandHistory.length ? commandHistory[historyIndex] : '';
+            historyIndex = historyIndex < commandHistory.length ? historyIndex : -1;
+            term.write('\r\x1b[K$ ' + inputBuffer);
         }
     } else {
-        inputBuffer += data; // Add typed data to the input buffer
-        term.write(data); // Display the typed character in the terminal
+        inputBuffer += data;
+        term.write(data);
     }
 });
 
 // Helper to clear and reset the terminal
 term.clear = function () {
-    term.reset(); // Reset the terminal's internal state
-    term.write('\x1b[2J\x1b[H'); // Clear the visible terminal screen
-    term.write('$ '); // Display the prompt
+    term.reset();
+    term.write('\x1b[2J\x1b[H');
+    term.write('$ ');
 };
 
-// Event listener to disable mouse events when selecting text
+// Allow double-click word selection
 term.element.addEventListener('mousedown', (event) => {
-    if (event.detail >= 2) { // Double click
+    if (event.detail >= 2) {
         event.preventDefault();
-        term.selectWord(); // Allow word selection
+        term.selectWord();
     }
 });
 
-// Allow mouse to focus for text selection
 term.focus();
