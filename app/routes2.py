@@ -83,6 +83,10 @@ def leaderboard():
 
     return render_template('leaderboard.html', leaderboard=leaderboard_with_rank)
 
+@main.route('/hands_on_labs2')
+def hands_on_labs2():
+    return render_template('hands_on_labs2.html')
+
 
 @main.route('/user_info')
 def user_info():

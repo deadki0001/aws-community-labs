@@ -118,6 +118,7 @@
         .nav-button:hover {
             background: #e65c00;        
         }
+
         .back-button:hover {
             background: rgba(255, 255, 255, 0.2);
         }
@@ -151,8 +152,8 @@
     <div class="background-animation"></div>
     
     <div class="container">
-        <a href="hands_on_labs2.html" class="nav-button">Next →</a>   
-        
+        <a href="{{ url_for('main.hands_on_labs2') }}" class="nav-button">Next →</a>
+      
         <div class="lab-card">
             <div class="lab-header">
                 <h2 class="lab-title">Launch Your First EC2 Instance</h2>

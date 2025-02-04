@@ -77,6 +77,11 @@ def labs():
     
     return render_template('hands_on_labs.html')
 
+@main.route('/hands_on_labs2')
+def hands_on_labs2():
+    return render_template('hands_on_labs2.html')
+
+
 # Route for the sign-up page
 @main.route('/signup', methods=['GET', 'POST'])
 def signup():
