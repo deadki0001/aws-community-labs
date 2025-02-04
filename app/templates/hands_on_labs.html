@@ -97,10 +97,13 @@
         }
 
         .nav-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
             display: flex;
-            justify-content: space-between;
-            padding: 2rem;
+            justify-content: flex-end;
         }
+
 
         .nav-button {
             background: #ff6f00;
@@ -113,6 +116,7 @@
             transition: background 0.3s;
             text-decoration: none;
             display: inline-block;
+            margin: 1rem;
         }
 
         .nav-button:hover {
@@ -212,7 +216,7 @@
 
     <script>
         function startLab() {
-            window.location.href = "/start-lab-session";  // Redirect the entire page
+            window.open("/start-lab-session", "_blank");  // Redirect the entire page
         }
     </script> 
 </body>
