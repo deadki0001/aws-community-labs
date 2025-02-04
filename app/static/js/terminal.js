@@ -18,6 +18,15 @@ term.element.style.webkitUserSelect = 'text';
 term.element.style.msUserSelect = 'text';
 term.element.style.mozUserSelect = 'text';
 
+// Make the white text box (xterm-helper-textarea) blacked out
+const textBox = document.querySelector('.xterm-helper-textarea');
+if (textBox) {
+    textBox.style.backgroundColor = '#000';
+    textBox.style.color = '#000';
+    textBox.style.border = 'none';
+    textBox.style.caretColor = 'transparent'; // Hide cursor
+}
+
 // Ensure copy (Ctrl+C / Cmd+C) works
 term.attachCustomKeyEventHandler((e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -33,11 +42,8 @@ term.element.addEventListener('mouseup', () => {
     }
 });
 
-// Fix the white box by making it black
-const textBox = document.querySelector('.white-box-selector'); // Replace with actual selector
-if (textBox) {
-    textBox.style.backgroundColor = '#000000';
-}
+// Allow entire terminal area to be copyable
+document.querySelector('#terminal-container .xterm').style.userSelect = 'text';
 
 // Function to convert URLs to hyperlinks
 function convertUrlsToLinks(text) {
