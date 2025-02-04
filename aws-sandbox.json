@@ -1,168 +1,201 @@
 {
-	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "Sandbox environment for AWS CLI Learning Platform",
-	"Parameters": {
-		"LabDurationMinutes": {
-			"Type": "Number",
-			"Default": 5,
-			"Description": "Duration of the lab session in minutes"
-		}
-	},
-	"Resources": {
-		"SandboxUserRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "SandboxUserRole",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"AWS": "*"
-							},
-							"Action": "sts:AssumeRole",
-							"Condition": {
-								"StringEquals": {
-									"aws:PrincipalTag/LabSession": "active"
-								}
-							}
-						}
-					]
-				},
-				"Policies": [
-					{
-						"PolicyName": "SandboxUserPolicy",
-						"PolicyDocument": {
-							"Version": "2012-10-17",
-							"Statement": [
-								{
-									"Effect": "Allow",
-									"Action": [
-										"ec2:RunInstances",
-										"ec2:TerminateInstances",
-										"ec2:DescribeInstances",
-										"ec2:CreateVpc",
-										"ec2:DeleteVpc",
-										"ec2:DescribeVpcs"
-									],
-									"Resource": "*",
-									"Condition": {
-										"StringEqualsIfExists": {
-											"ec2:InstanceType": "t2.micro"
-										}
-									}
-								}
-							]
-						}
-					}
-				]
-			}
-		},
-		"LambdaExecutionRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": "LambdaExecutionRole",
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "lambda.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-				],
-				"Policies": [
-					{
-						"PolicyName": "LambdaEC2CleanupPolicy",
-						"PolicyDocument": {
-							"Version": "2012-10-17",
-							"Statement": [
-								{
-									"Effect": "Allow",
-									"Action": [
-										"ec2:DescribeInstances",
-										"ec2:TerminateInstances"
-									],
-									"Resource": "*"
-								}
-							]
-						}
-					}
-				]
-			}
-		},
-		"CleanupFunction": {
-			"Type": "AWS::Lambda::Function",
-			"Properties": {
-				"FunctionName": "SandboxCleanup",
-				"Handler": "index.handler",
-				"Runtime": "python3.9",
-				"Role": {
-					"Fn::GetAtt": [
-						"LambdaExecutionRole",
-						"Arn"
-					]
-				},
-				"Timeout": 300,
-				"Code": {
-					"ZipFile": "import boto3\nimport datetime\n\ndef handler(event, context):\n    ec2 = boto3.client('ec2')\n    now = datetime.datetime.utcnow()\n    \n    # Describe instances with the LabSession tag\n    instances = ec2.describe_instances(\n        Filters=[{'Name': 'tag:LabSession', 'Values': ['active']}]\n    )\n    \n    terminated_instances = []\n    for reservation in instances['Reservations']:\n        for instance in reservation['Instances']:\n            launch_time = instance['LaunchTime'].replace(tzinfo=None)\n            age = (now - launch_time).total_seconds() / 60\n            \n            if age > 5:  # Cleanup after 5 minutes\n                instance_id = instance['InstanceId']\n                ec2.terminate_instances(InstanceIds=[instance_id])\n                terminated_instances.append(instance_id)\n    \n    return {\n        'statusCode': 200,\n        'body': f\"Cleanup executed. Terminated instances: {terminated_instances}\"\n    }"
-				}
-			}
-		},
-		"CleanupEventRule": {
-			"Type": "AWS::Events::Rule",
-			"Properties": {
-				"Name": "SandboxCleanupTrigger",
-				"ScheduleExpression": {
-					"Fn::Sub": "rate(${LabDurationMinutes} minutes)"
-				},
-				"State": "ENABLED",
-				"Targets": [
-					{
-						"Arn": {
-							"Fn::GetAtt": [
-								"CleanupFunction",
-								"Arn"
-							]
-						},
-						"Id": "CleanupLambda"
-					}
-				]
-			}
-		},
-		"CleanupLambdaPermission": {
-			"Type": "AWS::Lambda::Permission",
-			"Properties": {
-				"Action": "lambda:InvokeFunction",
-				"FunctionName": {
-					"Ref": "CleanupFunction"
-				},
-				"Principal": "events.amazonaws.com",
-				"SourceArn": {
-					"Fn::GetAtt": [
-						"CleanupEventRule",
-						"Arn"
-					]
-				}
-			}
-		}
-	},
-	"Outputs": {
-		"SandboxUserRoleArn": {
-			"Description": "ARN of the IAM role that users will assume for sandbox access",
-			"Value": {
-				"Fn::GetAtt": [
-					"SandboxUserRole",
-					"Arn"
-				]
-			}
-		}
-	}
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowSTSOperations",
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole",
+                "sts:TagSession"
+            ],
+            "Resource": "arn:aws:iam::010526269452:role/SandboxUserRole",
+            "Condition": {
+                "StringLike": {
+                    "aws:RequestTag/LabSession": "*",
+                    "aws:RequestTag/UserID": "*"
+                }
+            }
+        },
+        {
+            "Sid": "AllowEC2AMIListingFullAccess",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:GetAllowedImagesSettings",
+                "ec2:DescribeImages",
+                "ec2:DescribeImageAttribute",
+                "ec2:ModifyImageAttribute",
+                "ec2:ResetImageAttribute"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3WebsiteHostingPermissions",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:PutBucketPolicy",
+                "s3:GetBucketPolicy",
+                "s3:PutBucketWebsite",
+                "s3:GetBucketWebsite",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:PutObjectAcl",
+                "s3:GetObjectAcl",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:GetBucketAcl",
+                "s3:PutBucketAcl",
+                "s3:GetBucketPolicyStatus",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketPublicAccessBlock"
+            ],
+            "Resource": [
+                "arn:aws:s3:::*",
+                "arn:aws:s3:::*/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:Describe*",
+                "rds:ListTagsForResource",
+                "ec2:DescribeAccountAttributes",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeInternetGateways",
+                "ec2:DescribeSecurityGroups",
+                "ec2:CreateSecurityGroup",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeVpcAttribute",
+                "ec2:DescribeVpcs",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:GetMetricData",
+                "logs:DescribeLogStreams",
+                "logs:GetLogEvents",
+                "devops-guru:GetResourceCollection"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "devops-guru:SearchInsights",
+                "devops-guru:ListAnomaliesForInsight"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "ForAllValues:StringEquals": {
+                    "devops-guru:ServiceNames": [
+                        "RDS"
+                    ]
+                },
+                "Null": {
+                    "devops-guru:ServiceNames": "false"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:CreateDBSubnetGroup",
+                "rds:CreateDBParameterGroup",
+                "rds:ModifyDBInstance",
+                "rds:AddTagsToResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowEC2Operations",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:RunInstances",
+                "ec2:Describe*",
+                "ec2:CreateVpc",
+                "ec2:CreateSecurityGroup",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:CreateTags"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "DenyEC2ModificationAndDeletion",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:TerminateInstances",
+                "ec2:StopInstances",
+                "ec2:RebootInstances",
+                "ec2:DeleteVpc",
+                "ec2:DeleteSecurityGroup",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:ModifySecurityGroupRules"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "RDSInstanceManagement",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:DescribeDBInstances",
+                "rds:AddTagsToResource",
+                "rds:ListTagsForResource"
+            ],
+            "Resource": "arn:aws:rds:us-west-2:*:db:*",
+            "Condition": {
+                "StringLike": {
+                    "aws:RequestTag/LabSession": "*",
+                    "aws:RequestTag/UserID": "*"
+                },
+                "ForAnyValue:StringEquals": {
+                    "aws:TagKeys": [
+                        "LabSession",
+                        "UserID"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "RDSParameterGroups",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBParameterGroup",
+                "rds:DescribeDBParameterGroups"
+            ],
+            "Resource": "arn:aws:rds:us-west-2:*:pg:*"
+        },
+        {
+            "Sid": "RDSSubnetGroups",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBSubnetGroup",
+                "rds:DescribeDBSubnetGroups"
+            ],
+            "Resource": "arn:aws:rds:us-west-2:*:subgrp:*"
+        },
+        {
+            "Sid": "DenyRDSModificationAndDeletion",
+            "Effect": "Deny",
+            "Action": [
+                "rds:DeleteDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:RebootDBInstance",
+                "rds:DeleteDBParameterGroup",
+                "rds:ModifyDBParameterGroup",
+                "rds:DeleteDBSubnetGroup",
+                "rds:ModifyDBSubnetGroup"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
