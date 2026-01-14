@@ -32,9 +32,9 @@ def create_app():
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_SSL'] = True
     app.config['MAIL_DEBUG'] = True
-    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', "no-reply@deadkithedeveloper.click")
-    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', "Awsapp123!@#!")
-    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', "no-reply@deadkithedeveloper.click")
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', "no-reply@awslearningplatform.click")
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', "Sydney2026!@#")
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', "no-reply@awslearningplatform.click")
 
     # Initialize extensions
     db.init_app(app)
