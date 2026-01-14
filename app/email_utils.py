@@ -15,8 +15,8 @@ class EmailService:
                 <p>Best regards,<br>
                 Devon Adkins<br>
                 <strong>AWS Learning Platform</strong><br>
-                <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
-                📧 devon@deadkithedeveloper.click</p>
+                <a href="https://awslearningplatform.click">awslearningplatform.click</a><br>
+                📧 devon@awslearningplatform.click</p>
             </div>
             """
 
@@ -26,7 +26,7 @@ class EmailService:
 
                 # Create the email message
                 msg = Message(
-                    subject="Welcome to the AWWS Learning Platform! 🌟",
+                    subject="Welcome to the AWS Learning Platform! 🌟",
                     sender=("Devon Adkins via AWS Learning Platform", app.config['MAIL_DEFAULT_SENDER']),
                     recipients=[user.email]  # ✅ Corrected
                 )
@@ -47,7 +47,7 @@ class EmailService:
                 🌈 Challenges await you! Start your AWS learning journey now.
 
                 🆘 If you have any issues, contact us at:
-                devon@deadkithedeveloper.click
+                devon@awslearningplatform.click
 
                 🏆 Happy Learning!
                 AWS Learning Platform Team 💻
@@ -56,7 +56,7 @@ class EmailService:
                 Best regards,
                 Devon Adkins
                 AWS Learning Platform
-                https://deadkithedeveloper.click
+                https://awslearningplatform.click
                 """
 
                 # HTML version with signature
