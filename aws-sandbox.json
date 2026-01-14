@@ -8,7 +8,7 @@
                 "sts:AssumeRole",
                 "sts:TagSession"
             ],
-            "Resource": "arn:aws:iam::010526269452:role/SandboxUserRole",
+            "Resource": "arn:aws:iam::988176743547:role/SandboxUserRole",
             "Condition": {
                 "StringLike": {
                     "aws:RequestTag/LabSession": "*",

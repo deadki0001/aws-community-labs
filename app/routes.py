@@ -176,15 +176,15 @@ def forgot_password():
                 <p>Best regards,<br>
                 Devon Adkins<br>
                 <strong>AWS CLI Learning Platform</strong><br>
-                <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
-                📧 devon@deadkithedeveloper.click</p>
+                <a href="https://awslearningplatform.click">awslearningplatform.click</a><br>
+                📧 devon@awslearningplatform.click</p>
             </div>
             """
             
             # Prepare email
             msg = Message(
                 subject="Password Reset Instructions - AWS CLI Learning Platform",
-                sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
+                sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@awslearningplatform.click"),
                 recipients=[user.email]
             )
             
@@ -204,7 +204,7 @@ def forgot_password():
             Best regards,
             Devon Adkins
             AWS CLI Learning Platform
-            https://deadkithedeveloper.click
+            https://awslearningplatform.click
             """
             
             # HTML body with signature
@@ -277,7 +277,7 @@ def start_lab_session():
 
         # Assume the SandboxUserRole
         response = sts.assume_role(
-            RoleArn="arn:aws:iam::010526269452:role/SandboxUserRole",
+            RoleArn="arn:aws:iam::988176743547:role/SandboxUserRole",
             RoleSessionName=f"user-{session['user_id']}",
             DurationSeconds=900
         )
@@ -447,15 +447,15 @@ def send_cloud_warrior_badge(user):
         <p>Best regards,<br>
         Devon Adkins<br>
         <strong>AWS CLI Learning Platform</strong><br>
-        <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
-        📧 devon@deadkithedeveloper.click</p>
+        <a href="https://awslearningplatform.click">awslearningplatform.click</a><br>
+        📧 devon@awslearningplatform.click</p>
     </div>
     """
     
     # Prepare email
     msg = Message(
         subject="🏆 Congratulations! You've Unlocked the Cloud Warrior Badge!",
-        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
+        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@awslearningplatform.click"),
         recipients=[user.email]
     )
     
@@ -507,15 +507,15 @@ def send_cloud_sorcerer_badge(user):
         <p>Best regards,<br>
         Devon Adkins<br>
         <strong>AWS CLI Learning Platform</strong><br>
-        <a href="https://deadkithedeveloper.click">deadkithedeveloper.click</a><br>
-        📧 devon@deadkithedeveloper.click</p>
+        <a href="https://awslearningplatform.click">awslearningplatform.click</a><br>
+        📧 devon@awslearningplatform.click</p>
     </div>
     """
     
     # Prepare email
     msg = Message(
         subject="🌟 Congratulations! You've Unlocked the Cloud Sorcerer Badge!",
-        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@deadkithedeveloper.click"),
+        sender=("Devon Adkins via AWS CLI Learning Platform", "no-reply@awslearningplatform.click"),
         recipients=[user.email]
     )
     
