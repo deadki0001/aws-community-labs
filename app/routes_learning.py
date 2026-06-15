@@ -219,3 +219,15 @@ def my_progress_api():
                        'points_earned': pp.total_points_earned,
                        'completed': pp.completed_at is not None})
     return jsonify(result)
+
+
+# ── Stats API (used by dashboard cert + badge counts) ─────────────────────────
+@learning.route('/api/my-stats')
+@login_required
+def my_stats_api():
+    from app.models_learning import Certificate
+    from app.models import UserBadge
+    user = _current_user()
+    cert_count = Certificate.query.filter_by(user_id=user.id).count()
+    badge_count = UserBadge.query.filter_by(user_id=user.id).count()
+    return jsonify({'cert_count': cert_count, 'badge_count': badge_count})

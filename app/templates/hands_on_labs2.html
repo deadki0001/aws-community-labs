@@ -312,6 +312,97 @@
         </div>
     </div>
 
+
+    <!-- Lab 4: Configure IAM Roles and Policies -->
+    <div class="lab-card">
+        <div class="lab-header">
+            <h2 class="lab-title">Configure IAM Roles and Policies</h2>
+            <span class="lab-duration">Duration: 30 minutes</span>
+        </div>
+        <p class="lab-description">
+            Learn to create IAM users, groups, roles, and policies to control access to AWS services.
+            Implement the principle of least privilege by granting only the permissions each entity needs.
+        </p>
+        <div class="lab-objectives">
+            <h3>Lab Objectives</h3>
+            <ul>
+                <li>Create an IAM user with programmatic access</li>
+                <li>Create an IAM group and attach a managed policy</li>
+                <li>Create a custom IAM policy using the JSON editor</li>
+                <li>Create an IAM role for EC2 to access S3</li>
+                <li>Test permissions using the IAM policy simulator</li>
+            </ul>
+        </div>
+        <div class="lab-instructions">
+            <div class="instruction-section">
+                <h4>Step 1: Create an IAM User</h4>
+                <ol>
+                    <li>Open the <strong>IAM</strong> console from the AWS Management Console</li>
+                    <li>In the left navigation, click <strong>Users</strong> then <strong>Create user</strong></li>
+                    <li>Enter a username (e.g. <code>lab-developer</code>)</li>
+                    <li>Select <strong>Provide user access to the AWS Management Console</strong></li>
+                    <li>Choose <strong>Custom password</strong> and set a strong password</li>
+                    <li>Click <strong>Next</strong></li>
+                </ol>
+            </div>
+            <div class="instruction-section">
+                <h4>Step 2: Create an IAM Group with S3 Read-Only Access</h4>
+                <ol>
+                    <li>On the permissions page, click <strong>Create group</strong></li>
+                    <li>Name the group <code>developers</code></li>
+                    <li>Search for and select <strong>AmazonS3ReadOnlyAccess</strong></li>
+                    <li>Click <strong>Create user group</strong></li>
+                    <li>Select the group and click <strong>Next</strong> then <strong>Create user</strong></li>
+                </ol>
+            </div>
+            <div class="instruction-section">
+                <h4>Step 3: Create a Custom IAM Policy</h4>
+                <ol>
+                    <li>In IAM, click <strong>Policies</strong> then <strong>Create policy</strong></li>
+                    <li>Select the <strong>JSON</strong> tab and paste the following:
+                        <div class="code-block">
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::my-lab-bucket", "arn:aws:s3:::my-lab-bucket/*"]
+    }
+  ]
+}</div>
+                    </li>
+                    <li>Click <strong>Next</strong>, name the policy <code>LabS3ReadPolicy</code></li>
+                    <li>Click <strong>Create policy</strong></li>
+                </ol>
+            </div>
+            <div class="instruction-section">
+                <h4>Step 4: Create an IAM Role for EC2</h4>
+                <ol>
+                    <li>In IAM, click <strong>Roles</strong> then <strong>Create role</strong></li>
+                    <li>Select <strong>AWS service</strong> and choose <strong>EC2</strong></li>
+                    <li>Click <strong>Next</strong> and attach <strong>AmazonS3ReadOnlyAccess</strong></li>
+                    <li>Name the role <code>EC2-S3-ReadOnly-Role</code></li>
+                    <li>Click <strong>Create role</strong></li>
+                    <li>Attach this role to a running EC2 instance via Actions > Security > Modify IAM role</li>
+                </ol>
+            </div>
+            <div class="instruction-section">
+                <h4>Validation Checklist</h4>
+                <div class="validation-list">
+                    <ul>
+                        <li>- IAM user created with console access</li>
+                        <li>- User added to developers group with S3 read-only policy</li>
+                        <li>- Custom JSON policy created and saved</li>
+                        <li>- IAM role created with EC2 as trusted entity</li>
+                        <li>- Role attached to an EC2 instance</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="startLab()" class="start-lab-btn">Start Lab Session</button>
+        </div>
+    </div>
+
     <script>
         function startLab() {
             window.open("/start-lab-session", "_blank");

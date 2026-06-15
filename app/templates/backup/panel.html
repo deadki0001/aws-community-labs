@@ -32,6 +32,7 @@
   .drift-issue{color:#FF9900;font-size:.85rem;}
   #toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#232F3E;color:#fff;padding:1rem 1.5rem;border-radius:10px;border-left:4px solid #FF9900;display:none;z-index:999;max-width:400px;}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <nav>
@@ -50,8 +51,8 @@
   <h1>🗄️ Backup & Restore</h1>
 
   <div class="actions">
-    <button class="btn btn-primary" onclick="createBackup()">📦 Backup Now</button>
-    <button class="btn btn-outline" onclick="driftCheck()">🔍 Database Drift Check</button>
+    <button class="btn btn-primary" onclick="createBackup()"><i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>Backup Now</button>
+    <button class="btn btn-outline" onclick="driftCheck()"><i data-lucide="search-code" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>Drift Check</button>
   </div>
 
   <div id="result-box"></div>
@@ -65,8 +66,8 @@
         <td>{{ loop.index }}</td>
         <td>{{ b.backup_type }}</td>
         <td><span class="badge badge-{{ b.validation_status }}" id="bstatus-{{ b.id }}">{{ b.validation_status.upper() }}</span></td>
-        <td>{{ '%.1f KB'|format(b.file_size/1024) if b.file_size else '—' }}</td>
-        <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '—' }}</td>
+        <td>{{ '%.1f KB'|format(b.file_size/1024) if b.file_size else '-' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '-' }}</td>
         <td style="color:#888;font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ b.file_path.split('/')[-1] }}</td>
         <td>
           <button class="btn btn-outline btn-sm" onclick="validateBackup({{ b.id }})">Validate</button>
@@ -82,12 +83,12 @@
   </div>
 
   <div class="panel">
-    <h2>⚠️ Restore Instructions</h2>
+    <h2><i data-lucide="alert-triangle" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;color:#FF9900;"></i>Restore Instructions</h2>
     <p style="color:#bbb;font-size:.88rem;">Before restoring:
     <ol style="color:#bbb;font-size:.88rem;line-height:1.8;">
       <li>A safety snapshot of the current database is automatically created before any restore operation.</li>
       <li>Validate the target backup before restoring to confirm its integrity.</li>
-      <li>Restoring replaces the live database — all changes made after the backup date will be lost.</li>
+      <li>Restoring replaces the live database - all changes made after the backup date will be lost.</li>
       <li>Only validated (PASS) backups can be used for restoration.</li>
     </ol>
     </p>
@@ -159,7 +160,7 @@ function driftCheck() {
     .then(d=>{
       if (d.error) { showResult('❌ '+d.error, true); return; }
       if (d.status === 'clean') {
-        showResult('✅ Database schema is <strong>CLEAN</strong> — no drift detected.', false);
+        showResult('✅ Database schema is <strong>CLEAN</strong> - no drift detected.', false);
       } else {
         var issues = d.issues.map(i=>`<li class="drift-issue">${i}</li>`).join('');
         showResult(`⚠️ Schema drift detected (${d.issues.length} issue${d.issues.length>1?'s':''}):<ul>${issues}</ul>`, true);
@@ -167,5 +168,6 @@ function driftCheck() {
     }).catch(e=>showResult('❌ Request failed: '+e, true));
 }
 </script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

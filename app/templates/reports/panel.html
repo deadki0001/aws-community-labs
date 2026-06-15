@@ -21,6 +21,7 @@
   .btn:hover{background:#e68a00;}
   .note{background:rgba(255,153,0,.1);border:1px solid rgba(255,153,0,.3);border-radius:8px;padding:.8rem 1.2rem;font-size:.85rem;color:#ccc;margin-top:2rem;}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <nav>
@@ -35,22 +36,22 @@
   </div>
 </nav>
 <div class="container">
-  <h1>📊 Reports</h1>
+  <h1><i data-lucide="bar-chart-2" style="width:28px;height:28px;vertical-align:middle;margin-right:8px;"></i>Reports</h1>
   <div class="grid">
     <div class="card">
-      <div class="icon">👥</div>
+      <div style="margin-bottom:.8rem;"><i data-lucide="users" style="width:48px;height:48px;color:#FF9900;"></i></div>
       <h2>User Registration Report</h2>
       <p>All registered users with account details, roles, status, points, and login history.</p>
       <a href="/reports/users" class="btn">Download PDF</a>
     </div>
     <div class="card">
-      <div class="icon">📈</div>
+      <div style="margin-bottom:.8rem;"><i data-lucide="activity" style="width:48px;height:48px;color:#FF9900;"></i></div>
       <h2>System Activity Report</h2>
       <p>Chronological log of all administrative actions recorded in the audit trail.</p>
       <a href="/reports/activity" class="btn">Download PDF</a>
     </div>
     <div class="card">
-      <div class="icon">🗄️</div>
+      <div style="margin-bottom:.8rem;"><i data-lucide="database" style="width:48px;height:48px;color:#FF9900;"></i></div>
       <h2>Backup Integrity Report</h2>
       <p>All backup operations with type, timestamp, file size, and validation status.</p>
       <a href="/reports/backups" class="btn">Download PDF</a>
@@ -60,5 +61,6 @@
     All reports are generated as PDF files and downloaded directly to your browser. Reports reflect the current live database state at the time of generation.
   </div>
 </div>
+<script>lucide.createIcons();</script>
 </body>
 </html>

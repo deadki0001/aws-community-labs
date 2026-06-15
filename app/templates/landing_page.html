@@ -31,6 +31,7 @@
   .admin-badge{display:inline-block;background:#FF9900;color:#000;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;margin-left:.5rem;vertical-align:middle;}
   {% endif %}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 
@@ -39,26 +40,26 @@
 <div id="wizard-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;display:flex;align-items:center;justify-content:center;">
   <div style="background:#1a1a2e;border:2px solid #FF9900;border-radius:16px;padding:2.5rem;max-width:540px;width:90%;text-align:center;">
     <div id="wizard-step-1">
-      <div style="font-size:3rem;">☁️</div>
+      <div><i data-lucide="cloud" style="width:56px;height:56px;color:#FF9900;"></i></div>
       <h2 style="color:#FF9900;margin:.5rem 0;">Welcome to AWS Community Labs!</h2>
-      <p style="color:#ccc;">Hi <strong>{{ user.username }}</strong> — you've joined South Africa's free cloud learning platform. Let's show you around.</p>
+      <p style="color:#ccc;">Hi <strong>{{ user.username }}</strong> - you've joined South Africa's free cloud learning platform. Let's show you around.</p>
       <button onclick="showStep(2)" style="padding:.7rem 2rem;background:#FF9900;color:#000;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:1rem;">Get Started →</button>
     </div>
     <div id="wizard-step-2" style="display:none;">
-      <div style="font-size:2rem;">📚 🖥️ 🏆 📊 🎖️</div>
+      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:.5rem;"><i data-lucide="book-open" style="width:28px;height:28px;color:#FF9900;"></i><i data-lucide="terminal" style="width:28px;height:28px;color:#FF9900;"></i><i data-lucide="trophy" style="width:28px;height:28px;color:#FF9900;"></i><i data-lucide="bar-chart-2" style="width:28px;height:28px;color:#FF9900;"></i><i data-lucide="award" style="width:28px;height:28px;color:#FF9900;"></i></div>
       <h2 style="color:#FF9900;">Platform Tour</h2>
       <p style="color:#ccc;text-align:left;">The platform has five core areas:</p>
       <ul style="text-align:left;color:#bbb;line-height:1.9;">
-        <li><strong>Learning Paths</strong> — AWS certification-aligned modules with quizzes</li>
-        <li><strong>Challenges</strong> — Practise real AWS CLI commands in your browser</li>
-        <li><strong>Leaderboard</strong> — See how you rank against other learners</li>
-        <li><strong>Certificates</strong> — Download proof of your achievements</li>
-        <li><strong>Labs</strong> — Guided hands-on lab environments</li>
+        <li><strong>Learning Paths</strong> - AWS certification-aligned modules with quizzes</li>
+        <li><strong>Challenges</strong> - Practise real AWS CLI commands in your browser</li>
+        <li><strong>Leaderboard</strong> - See how you rank against other learners</li>
+        <li><strong>Certificates</strong> - Download proof of your achievements</li>
+        <li><strong>Labs</strong> - Guided hands-on lab environments</li>
       </ul>
       <button onclick="showStep(3)" style="padding:.7rem 2rem;background:#FF9900;color:#000;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:.5rem;">Next →</button>
     </div>
     <div id="wizard-step-3" style="display:none;">
-      <div style="font-size:3rem;">🎯</div>
+      <div><i data-lucide="target" style="width:56px;height:56px;color:#FF9900;"></i></div>
       <h2 style="color:#FF9900;">Your Learning Goal</h2>
       <p style="color:#ccc;">What are you here to achieve?</p>
       <div id="goal-options" style="display:flex;flex-direction:column;gap:.6rem;margin:1rem 0;">
@@ -69,9 +70,9 @@
       <button onclick="showStep(4)" id="goal-next" style="padding:.7rem 2rem;background:#555;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:.5rem;" disabled>Next →</button>
     </div>
     <div id="wizard-step-4" style="display:none;">
-      <div style="font-size:3rem;">🚀</div>
+      <div><i data-lucide="rocket" style="width:56px;height:56px;color:#FF9900;"></i></div>
       <h2 style="color:#FF9900;">You're Ready!</h2>
-      <p style="color:#ccc;">Start with the <strong>AWS Cloud Practitioner</strong> path — the recommended first step for all new cloud learners.</p>
+      <p style="color:#ccc;">Start with the <strong>AWS Cloud Practitioner</strong> path - the recommended first step for all new cloud learners.</p>
       <a href="/learning-paths/aws-cloud-practitioner" style="display:inline-block;padding:.8rem 2rem;background:#FF9900;color:#000;font-weight:700;border-radius:8px;text-decoration:none;margin-top:1rem;">Begin Learning →</a>
       <br><button onclick="closeWizard()" style="margin-top:.8rem;background:none;border:none;color:#888;font-size:.85rem;cursor:pointer;text-decoration:underline;">Skip for now</button>
     </div>
@@ -86,14 +87,14 @@
 {% endif %}
 
 <nav>
-  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <a class="nav-brand" href="/"><i data-lucide="cloud" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;color:#FF9900;"></i>AWS Community Labs</a>
   <div class="nav-links">
     <a href="/learning-paths">Learning Paths</a>
     <a href="/challenges">Challenges</a>
     <a href="/leaderboard">Leaderboard</a>
     <a href="/my-certificates">Certificates</a>
     {% if user.role == 'admin' %}
-    <a href="/admin/dashboard" style="color:#FF9900;">⚙️ Admin</a>
+    <a href="/admin/dashboard" style="color:#FF9900;"><i data-lucide="settings" style="width:14px;height:14px;vertical-align:middle;margin-right:3px;"></i>Admin</a>
     {% endif %}
   </div>
   <div class="nav-user">
@@ -105,7 +106,7 @@
 
 <div class="container">
   <div class="welcome">
-    <h1>Welcome back, {{ user.username }}! 👋</h1>
+    <h1>Welcome back, {{ user.username }}! <i data-lucide="hand-metal" style="width:32px;height:32px;"></i></h1>
     <p>Your cloud learning journey continues here.</p>
   </div>
 
@@ -119,44 +120,48 @@
       <div class="lbl">Challenges Completed</div>
     </div>
     <div class="stat-card" id="cert-count-card">
-      <div class="val">—</div>
+      <div class="val" id="cert-count-val">0</div>
       <div class="lbl">Certificates Earned</div>
     </div>
+    <div class="stat-card">
+      <div class="val" id="badge-count-val">0</div>
+      <div class="lbl">Badges Earned</div>
+    </div>
     <div class="stat-card" id="path-count-card">
-      <div class="val">—</div>
+      <div class="val">-</div>
       <div class="lbl">Paths In Progress</div>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <h3>📚 Learning Paths</h3>
+      <h3><i data-lucide="book-open" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>Learning Paths</h3>
       <p>Follow structured AWS certification-aligned modules with quizzes and certificates.</p>
       <a class="btn-card" href="/learning-paths">Browse Paths</a>
     </div>
     <div class="card">
-      <h3>🖥️ CLI Challenges</h3>
+      <h3><i data-lucide="terminal" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>CLI Challenges</h3>
       <p>Practise real AWS CLI commands in your browser and earn points for each one.</p>
       <a class="btn-card" href="/challenges">Start Challenges</a>
     </div>
     <div class="card">
-      <h3>🏆 Leaderboard</h3>
+      <h3><i data-lucide="trophy" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>Leaderboard</h3>
       <p>See where you rank among all learners on the platform.</p>
       <a class="btn-card" href="/leaderboard">View Leaderboard</a>
     </div>
     <div class="card">
-      <h3>🎖️ My Certificates</h3>
+      <h3><i data-lucide="award" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>My Certificates</h3>
       <p>Download and share your earned certificates.</p>
       <a class="btn-card" href="/my-certificates">View Certificates</a>
     </div>
     <div class="card">
-      <h3>🔬 Hands-On Labs</h3>
+      <h3><i data-lucide="flask-conical" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>Hands-On Labs</h3>
       <p>Interactive guided lab sessions for deeper AWS practice.</p>
       <a class="btn-card" href="/labs">Open Labs</a>
     </div>
     {% if user.role == 'admin' %}
     <div class="card" style="border-color:rgba(255,153,0,.5);">
-      <h3>⚙️ Admin Panel</h3>
+      <h3><i data-lucide="settings" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"></i>Admin Panel</h3>
       <p>Manage users, generate reports, and handle database backups.</p>
       <a class="btn-card" href="/admin/dashboard">Open Admin</a>
     </div>
@@ -165,7 +170,7 @@
 </div>
 
 <script>
-// Wizard logic
+// ── Wizard ───────────────────────────────────────────────────────────────────
 var currentStep = 1;
 var selectedGoal = '';
 
@@ -181,9 +186,10 @@ function selectGoal(btn, goal) {
   selectedGoal = goal;
   document.querySelectorAll('.goal-btn').forEach(b => b.style.background='rgba(255,153,0,.15)');
   btn.style.background='rgba(255,153,0,.4)';
-  document.getElementById('goal-next').disabled = false;
-  document.getElementById('goal-next').style.background='#FF9900';
-  document.getElementById('goal-next').style.color='#000';
+  var next = document.getElementById('goal-next');
+  next.disabled = false;
+  next.style.background='#FF9900';
+  next.style.color='#000';
 }
 
 function closeWizard() {
@@ -191,14 +197,28 @@ function closeWizard() {
   document.getElementById('wizard-overlay').style.display='none';
 }
 
-// Load progress stats
-fetch('/api/my-progress').then(r=>r.json()).then(data=>{
-  var inProgress = data.filter(p=>!p.completed).length;
-  document.getElementById('path-count-card').querySelector('.val').textContent = inProgress;
-});
+// ── Stats ─────────────────────────────────────────────────────────────────────
+// Learning path progress
+fetch('/api/my-progress')
+  .then(r => r.json())
+  .then(data => {
+    var inProgress = data.filter(p => !p.completed).length;
+    var el = document.getElementById('path-count-card');
+    if (el) el.querySelector('.val').textContent = inProgress;
+  })
+  .catch(() => {});
 
-fetch('/my-certificates').then(()=>{}).catch(()=>{});
-// Get cert count from DOM if available
+// Certificate and badge counts
+fetch('/api/my-stats')
+  .then(r => r.json())
+  .then(data => {
+    var certEl = document.getElementById('cert-count-val');
+    if (certEl) certEl.textContent = data.cert_count || 0;
+    var badgeEl = document.getElementById('badge-count-val');
+    if (badgeEl) badgeEl.textContent = data.badge_count || 0;
+  })
+  .catch(() => {});
 </script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

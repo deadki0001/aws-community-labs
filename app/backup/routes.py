@@ -35,7 +35,7 @@ def _validate_backup_file(backup_path, live_db_path):
                     live_conn.close()
                     return 'fail', f'Record count mismatch in {table}: backup={b_count} live={l_count}'
             except sqlite3.OperationalError:
-                pass  # table may not exist in backup — skip
+                pass  # table may not exist in backup - skip
         backup_conn.close()
         live_conn.close()
         return 'pass', None
@@ -44,7 +44,7 @@ def _validate_backup_file(backup_path, live_db_path):
 
 
 def run_backup(backup_type='automated', user_id=None):
-    """Core backup function — used by both manual trigger and APScheduler."""
+    """Core backup function - used by both manual trigger and APScheduler."""
     with current_app.app_context():
         _ensure_backup_dir()
         db_path = _get_db_path()

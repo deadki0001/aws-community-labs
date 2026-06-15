@@ -37,7 +37,7 @@ def validate_password(password):
 
 
 def validate_name(name):
-    """Validates a display name — letters and spaces only, no numbers."""
+    """Validates a display name - letters and spaces only, no numbers."""
     if not name or len(name.strip()) < 2:
         return False, "Name must be at least 2 characters long."
     if re.search(r'\d', name):

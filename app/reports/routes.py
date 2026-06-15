@@ -30,7 +30,7 @@ def _doc_header(elements, title):
     sub_style = ParagraphStyle('Sub', parent=styles['Normal'],
                                fontSize=10, textColor=colors.gray,
                                spaceAfter=20)
-    elements.append(Paragraph('AWS Community Labs — awslearningplatform.click', sub_style))
+    elements.append(Paragraph('AWS Community Labs - awslearningplatform.click', sub_style))
     elements.append(Paragraph(title, title_style))
     elements.append(Paragraph(f'Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M")} UTC', sub_style))
     elements.append(Spacer(1, 0.4 * cm))
@@ -80,11 +80,11 @@ def user_registration_report():
         data.append([
             str(i),
             u.username,
-            u.email or '—',
+            u.email or '-',
             u.role.upper(),
             'Active' if u.is_active else 'Inactive',
             str(user_scores[u.id]),
-            u.created_at.strftime('%Y-%m-%d') if u.created_at else '—',
+            u.created_at.strftime('%Y-%m-%d') if u.created_at else '-',
             u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else 'Never',
         ])
 
@@ -121,8 +121,8 @@ def system_activity_report():
             str(i),
             admin.username if admin else f'ID:{log.admin_id}',
             log.action_type,
-            log.affected_record or '—',
-            log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '—',
+            log.affected_record or '-',
+            log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '-',
         ])
 
     col_widths = [1*cm, 3*cm, 4*cm, 7*cm, 4.5*cm]
@@ -158,11 +158,11 @@ def backup_integrity_report():
             str(i),
             b.backup_type.upper(),
             b.validation_status.upper(),
-            str(round(b.file_size / 1024, 1)) if b.file_size else '—',
+            str(round(b.file_size / 1024, 1)) if b.file_size else '-',
             creator.username if creator else 'Automated',
-            b.created_at.strftime('%Y-%m-%d %H:%M:%S') if b.created_at else '—',
+            b.created_at.strftime('%Y-%m-%d %H:%M:%S') if b.created_at else '-',
             (b.error_message[:40] + '…') if b.error_message and len(b.error_message) > 40
-            else (b.error_message or '—'),
+            else (b.error_message or '-'),
         ])
 
     col_widths = [1*cm, 3*cm, 2.5*cm, 2.5*cm, 3*cm, 4.5*cm, 5.5*cm]

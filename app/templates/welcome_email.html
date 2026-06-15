@@ -1,24 +1,86 @@
-<p>Hello {{ user.username }}! 👋</p>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to AWS Community Labs</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:40px 0;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
 
-<p>🎉 Welcome to the AWS Learning Platform! 🚀</p>
+      <!-- Header -->
+      <tr><td style="background:#232F3E;padding:32px 40px;text-align:center;">
+        <p style="color:#FF9900;font-size:26px;font-weight:700;margin:0;">AWS Community Labs</p>
+        <p style="color:#aaa;font-size:13px;margin:6px 0 0;">awslearningplatform.click</p>
+      </td></tr>
 
-<p>🔐 Your account has been successfully created. Here are your login details:</p>
-<ul>
-    <li>👤 Username: {{ user.username }}</li>
-    <li>🔑 Password: {{ password }}</li>
-</ul>
+      <!-- Body -->
+      <tr><td style="padding:36px 40px;color:#333;">
+        <p style="font-size:22px;font-weight:600;margin:0 0 12px;">Welcome, {{ user.username }}!</p>
+        <p style="font-size:15px;line-height:1.7;margin:0 0 20px;color:#555;">
+          Your account on <strong>AWS Community Labs</strong> has been created successfully.
+          You now have free access to structured AWS learning paths, hands-on CLI challenges,
+          a browser-based sandbox terminal, and verifiable certificates.
+        </p>
 
-<p>📝 Please log in and change your password after your first login.</p>
-<p>🌈 Challenges await you! Start your AWS learning journey now.</p>
+        <!-- Account details box -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;border-radius:8px;margin-bottom:24px;">
+          <tr><td style="padding:20px 24px;">
+            <p style="margin:0 0 8px;font-size:13px;color:#888;text-transform:uppercase;letter-spacing:1px;">Your Account</p>
+            <p style="margin:0 0 6px;font-size:15px;"><strong>Username:</strong> {{ user.username }}</p>
+            <p style="margin:0;font-size:15px;"><strong>Email:</strong> {{ user.email }}</p>
+          </td></tr>
+        </table>
 
-<p>🆘 If you have any issues, contact us at:<br>
-📧 <a href="mailto:devon@awslearningplatform.click">devon@awslearningplatform.click</a></p>
+        <!-- What to do next -->
+        <p style="font-size:15px;font-weight:600;margin:0 0 12px;color:#232F3E;">Where to start:</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+          <tr>
+            <td width="36" valign="top" style="padding:4px 0;font-size:18px;">1.</td>
+            <td style="padding:4px 0;font-size:14px;color:#555;line-height:1.6;">
+              <strong>Start learning</strong> - Browse AWS certification-aligned learning paths and enrol in your first module.
+            </td>
+          </tr>
+          <tr>
+            <td width="36" valign="top" style="padding:4px 0;font-size:18px;">2.</td>
+            <td style="padding:4px 0;font-size:14px;color:#555;line-height:1.6;">
+              <strong>Complete challenges</strong> - Practise real AWS CLI commands in your browser and earn points.
+            </td>
+          </tr>
+          <tr>
+            <td width="36" valign="top" style="padding:4px 0;font-size:18px;">3.</td>
+            <td style="padding:4px 0;font-size:14px;color:#555;line-height:1.6;">
+              <strong>Earn certificates</strong> - Pass module quizzes to receive downloadable certificates.
+            </td>
+          </tr>
+        </table>
 
-<p>🏆 Happy Learning!<br>
-AWS Learning Platform Team 💻</p>
+        <!-- CTA button -->
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
+          <tr><td align="center" style="background:#FF9900;border-radius:8px;">
+            <a href="https://awslearningplatform.click" style="display:inline-block;padding:14px 36px;color:#000;font-weight:700;font-size:15px;text-decoration:none;">
+              Start Learning
+            </a>
+          </td></tr>
+        </table>
 
-<hr>
-<footer>
-    🌐 <a href="https://awslearningplatform.click/">Visit Us</a> |  
-    📧 <a href="mailto:devon@awslearningplatform.click">devon@awslearningplatform.click</a><br>
-</footer>
+        <p style="font-size:13px;color:#999;margin:0;text-align:center;">
+          If you did not create this account, you can safely ignore this email.
+        </p>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td style="background:#f8f9fa;padding:20px 40px;text-align:center;border-top:1px solid #e9ecef;">
+        <p style="font-size:12px;color:#999;margin:0;">
+          AWS Community Labs - Free cloud education for South African learners<br>
+          <a href="https://awslearningplatform.click" style="color:#FF9900;text-decoration:none;">awslearningplatform.click</a>
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

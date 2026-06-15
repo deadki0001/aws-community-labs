@@ -17,6 +17,7 @@
   th{background:rgba(255,153,0,.2);padding:.6rem .8rem;text-align:left;color:#FF9900;}
   td{padding:.5rem .8rem;border-bottom:1px solid rgba(255,255,255,.07);}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <nav>
@@ -40,8 +41,8 @@
         <td>{{ loop.index }}</td>
         <td>{{ log.admin.username if log.admin else 'Unknown' }}</td>
         <td><strong>{{ log.action_type }}</strong></td>
-        <td style="color:#aaa;">{{ log.affected_record or '—' }}</td>
-        <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '—' }}</td>
+        <td style="color:#aaa;">{{ log.affected_record or '-' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '-' }}</td>
       </tr>
       {% else %}
       <tr><td colspan="5" style="text-align:center;color:#666;padding:2rem;">No audit entries yet.</td></tr>
@@ -49,5 +50,6 @@
     </table>
   </div>
 </div>
+<script>lucide.createIcons();</script>
 </body>
 </html>

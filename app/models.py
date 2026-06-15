@@ -177,6 +177,7 @@ def check_and_award_badges(user_id):
     if not user:
         return
     total_score = db.session.query(sqlfunc.sum(Score.score)).filter_by(user_id=user_id).scalar() or 0
+    newly_awarded = []
     challenge_count = Score.query.filter_by(user_id=user_id).count()
     # Award score-based badges
     score_badges = [(10, 'Cloud Warrior'), (50, 'Cloud Sorcerer')]
@@ -187,10 +188,20 @@ def check_and_award_badges(user_id):
                 existing = UserBadge.query.filter_by(user_id=user_id, badge_id=badge.id).first()
                 if not existing:
                     db.session.add(UserBadge(user_id=user_id, badge_id=badge.id))
+                    newly_awarded.append(badge)
     if challenge_count >= 1:
         badge = Badge.query.filter_by(name='First Steps').first()
         if badge:
             existing = UserBadge.query.filter_by(user_id=user_id, badge_id=badge.id).first()
             if not existing:
                 db.session.add(UserBadge(user_id=user_id, badge_id=badge.id))
+                newly_awarded.append(badge)
     db.session.commit()
+    # Send badge notification emails
+    if user.email:
+        try:
+            from app.email_utils import send_badge_email
+            for badge in newly_awarded:
+                send_badge_email(user, badge)
+        except Exception as e:
+            print(f"[Badge email] Error: {e}")

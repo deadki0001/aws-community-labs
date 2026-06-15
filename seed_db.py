@@ -18,10 +18,11 @@ with app.app_context():
     db.create_all()
 
     from app.models import initialize_challenges, initialize_badges
-    from app.models_learning import seed_learning_paths
+    from app.models_learning import seed_learning_paths, seed_aws_associate_paths
     initialize_challenges()
     initialize_badges()
     seed_learning_paths()
+    seed_aws_associate_paths()
 
     # Create admin user
     if not User.query.filter_by(username='admin').first():

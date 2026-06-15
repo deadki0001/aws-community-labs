@@ -34,6 +34,7 @@
   .btn:hover{opacity:.85;}
   #toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#232F3E;color:#fff;padding:1rem 1.5rem;border-radius:10px;border-left:4px solid #FF9900;display:none;z-index:999;}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <nav>
@@ -63,11 +64,11 @@
       <tr id="row-{{ user.id }}">
         <td>{{ loop.index }}</td>
         <td><strong>{{ user.username }}</strong></td>
-        <td style="color:#aaa;">{{ user.email or '—' }}</td>
+        <td style="color:#aaa;">{{ user.email or '-' }}</td>
         <td><span class="badge badge-{{ user.role }}">{{ user.role.upper() }}</span></td>
         <td><span class="badge badge-{{ 'active' if user.is_active else 'inactive' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
         <td>{{ user_scores[user.id] }}</td>
-        <td style="color:#aaa;font-size:.8rem;">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
         <td style="color:#aaa;font-size:.8rem;">{{ user.last_login.strftime('%Y-%m-%d') if user.last_login else 'Never' }}</td>
         <td>
           <div class="actions">
@@ -120,5 +121,6 @@ function showToast(msg, err) {
   setTimeout(()=>t.style.display='none', 3000);
 }
 </script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

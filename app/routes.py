@@ -15,6 +15,7 @@ from werkzeug.security import generate_password_hash
 from app import db, mail
 from app.models import User, Challenge, Score, check_and_award_badges
 from app.validation import validate_username, validate_email, validate_password, sanitise_cli_input
+from app.email_utils import send_welcome_email
 from app.decorators import login_required
 
 main = Blueprint('main', __name__)
@@ -55,7 +56,7 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         user = User.query.filter_by(username=username).first()
-        # Generic error — do not reveal which field failed
+        # Generic error - do not reveal which field failed
         if not user or not user.check_password(password):
             return render_template('login.html', message='❌ Invalid username or password.')
         if not user.is_active:
@@ -118,6 +119,9 @@ def signup():
             session.permanent = True
             new_user.last_login = datetime.utcnow()
             db.session.commit()
+            # Send welcome email - non-blocking, does not affect registration on failure
+            if new_user.email:
+                send_welcome_email(new_user)
             return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
@@ -145,7 +149,7 @@ def forgot_password():
             db.session.commit()
             reset_link = url_for('main.reset_password', token=reset_token, _external=True)
             msg = Message(
-                subject='Password Reset – AWS Community Labs',
+                subject='Password Reset - AWS Community Labs',
                 sender=('AWS Community Labs', 'no-reply@awslearningplatform.click'),
                 recipients=[user.email]
             )
@@ -154,7 +158,7 @@ def forgot_password():
             <p>You requested a password reset for your AWS Community Labs account.</p>
             <p><a href="{reset_link}">Click here to reset your password</a></p>
             <p>This link expires in 1 hour. If you did not request this, ignore this email.</p>
-            <p>— AWS Community Labs</p>
+            <p>- AWS Community Labs</p>
             """
             try:
                 mail.send(msg)
@@ -252,6 +256,13 @@ def validate_command():
 def labs():
     user = User.query.get(session['user_id'])
     return render_template('hands_on_labs.html', user=user)
+
+
+@main.route('/labs/2')
+@login_required
+def labs2():
+    user = User.query.get(session['user_id'])
+    return render_template('hands_on_labs2.html', user=user)
 
 
 @main.route('/leaderboard')

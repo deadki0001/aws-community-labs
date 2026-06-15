@@ -15,25 +15,25 @@ def create_app():
     db_path = os.path.join(app.instance_path, 'app.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'change-me-in-production')
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
-    app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+    app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-    # Email
+    # Email configuration
     app.config['MAIL_SERVER'] = 'smtp.zoho.com'
     app.config['MAIL_PORT'] = 465
     app.config['MAIL_USE_SSL'] = True
-    app.config['MAIL_DEBUG'] = False
+    app.config['MAIL_DEBUG'] = True
     app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'no-reply@awslearningplatform.click')
-    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'Sydney2026!@#')
     app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'no-reply@awslearningplatform.click')
 
     db.init_app(app)
     mail.init_app(app)
 
-    # ── Blueprints ─────────────────────────────────────────────────────────────
+    # Blueprints
     from app.routes import main
     app.register_blueprint(main)
 
@@ -49,26 +49,24 @@ def create_app():
     from app.reports.routes import reports
     app.register_blueprint(reports)
 
-    # ── Database + Seed ────────────────────────────────────────────────────────
+    # Database + Seed
     with app.app_context():
         db.create_all()
         from app.models import initialize_challenges, initialize_badges
-        from app.models_learning import seed_learning_paths
+        from app.models_learning import seed_learning_paths, seed_aws_associate_paths
         initialize_challenges()
         initialize_badges()
         seed_learning_paths()
+        seed_aws_associate_paths()
 
-    # ── APScheduler: daily automated backup at 02:00 SAST (00:00 UTC) ─────────
+    # APScheduler - daily automated backup at 00:00 UTC (02:00 SAST)
     _start_scheduler(app)
 
     return app
 
 
 def _start_scheduler(app):
-    """Start APScheduler for automated daily backups.
-    Guard against double-start in Flask debug reloader."""
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or \
-       not app.debug:
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
         try:
             from apscheduler.schedulers.background import BackgroundScheduler
 

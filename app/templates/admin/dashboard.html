@@ -33,6 +33,7 @@
   .btn:hover{opacity:.85;}
   @media(max-width:700px){.grid{grid-template-columns:1fr;}}
 </style>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <nav>
@@ -49,7 +50,7 @@
 </nav>
 
 <div class="container">
-  <h1>⚙️ Admin Dashboard</h1>
+  <h1><i data-lucide="settings" style="width:24px;height:24px;vertical-align:middle;margin-right:8px;"></i>Admin Dashboard</h1>
 
   <div class="stats">
     <div class="stat"><div class="val">{{ stats.total_users }}</div><div class="lbl">Total Users</div></div>
@@ -68,8 +69,8 @@
         {% for log in recent_logs %}
         <tr>
           <td>{{ log.action_type }}</td>
-          <td style="color:#aaa;font-size:.8rem;">{{ log.affected_record or '—' }}</td>
-          <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%m-%d %H:%M') if log.timestamp else '—' }}</td>
+          <td style="color:#aaa;font-size:.8rem;">{{ log.affected_record or '-' }}</td>
+          <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%m-%d %H:%M') if log.timestamp else '-' }}</td>
         </tr>
         {% else %}
         <tr><td colspan="3" style="color:#666;text-align:center;">No activity yet</td></tr>
@@ -85,7 +86,7 @@
         <tr>
           <td>{{ b.backup_type }}</td>
           <td><span class="badge badge-{{ b.validation_status }}">{{ b.validation_status.upper() }}</span></td>
-          <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%m-%d %H:%M') if b.created_at else '—' }}</td>
+          <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%m-%d %H:%M') if b.created_at else '-' }}</td>
         </tr>
         {% else %}
         <tr><td colspan="3" style="color:#666;text-align:center;">No backups yet</td></tr>
@@ -98,11 +99,12 @@
   </div>
 
   <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;">
-    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
-    <a href="/reports/" class="btn btn-outline">Generate Reports</a>
+    <a href="/admin/users" class="btn btn-primary"><i data-lucide="users" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>Manage Users</a>
+    <a href="/reports/" class="btn btn-outline"><i data-lucide="bar-chart-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>Generate Reports</a>
     <a href="/backup/" class="btn btn-outline">Backup & Restore</a>
-    <a href="/admin/audit-log" class="btn btn-outline">View Audit Log</a>
+    <a href="/admin/audit-log" class="btn btn-outline"><i data-lucide="scroll-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>View Audit Log</a>
   </div>
 </div>
+<script>lucide.createIcons();</script>
 </body>
 </html>
