@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In | AWS Community Labs</title>
+<style>
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+  .box{background:rgba(0,0,0,.75);border-radius:16px;padding:2.5rem;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .logo{text-align:center;margin-bottom:1.5rem;}
+  .logo h1{font-size:1.6rem;margin:0;color:#FF9900;}
+  .logo p{font-size:.85rem;color:#aaa;margin:.3rem 0 0;}
+  label{display:block;font-size:.85rem;color:#ccc;margin:.8rem 0 .3rem;}
+  input[type=text],input[type=password]{width:100%;padding:.7rem;border-radius:8px;border:1px solid #444;background:#1a1a2e;color:#fff;font-size:1rem;box-sizing:border-box;}
+  input:focus{outline:none;border-color:#FF9900;}
+  .btn{width:100%;padding:.8rem;background:#FF9900;color:#000;font-weight:700;font-size:1rem;border:none;border-radius:8px;cursor:pointer;margin-top:1.2rem;}
+  .btn:hover{background:#e68a00;}
+  .msg{background:rgba(255,80,80,.2);border:1px solid rgba(255,80,80,.5);border-radius:8px;padding:.7rem 1rem;font-size:.9rem;margin-bottom:1rem;text-align:center;}
+  .links{text-align:center;margin-top:1rem;font-size:.85rem;}
+  .links a{color:#FF9900;text-decoration:none;}
+  .links a:hover{text-decoration:underline;}
+  .req-box{background:rgba(255,153,0,.1);border:1px solid rgba(255,153,0,.4);border-radius:8px;padding:.7rem 1rem;font-size:.82rem;color:#ccc;margin-bottom:.8rem;}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">
+    <h1>☁️ AWS Community Labs</h1>
+    <p>Cloud Learning Platform</p>
+  </div>
+
+  {% if message %}
+  <div class="msg">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Your username">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Your password">
+
+    <button type="submit" class="btn">Log In</button>
+  </form>
+
+  <div class="links">
+    <a href="/forgot-password">Forgot password?</a>
+    &nbsp;|&nbsp;
+    <a href="/signup">Create an account</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Log | Admin</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;min-height:100vh;}
+  nav{background:rgba(0,0,0,.8);padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+  .nav-brand{font-size:1.1rem;font-weight:700;color:#FF9900;text-decoration:none;}
+  .nav-links a{color:#ddd;text-decoration:none;margin-left:1.2rem;font-size:.88rem;}
+  .nav-links a:hover{color:#FF9900;}
+  .container{max-width:1100px;margin:0 auto;padding:2rem;}
+  h1{margin:0 0 1.5rem;}
+  .panel{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.1);overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{background:rgba(255,153,0,.2);padding:.6rem .8rem;text-align:left;color:#FF9900;}
+  td{padding:.5rem .8rem;border-bottom:1px solid rgba(255,255,255,.07);}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <div class="nav-links">
+    <a href="/admin/dashboard">Dashboard</a>
+    <a href="/admin/users">Users</a>
+    <a href="/admin/audit-log" style="color:#FF9900;">Audit Log</a>
+    <a href="/backup/">Backup</a>
+    <a href="/reports/">Reports</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+<div class="container">
+  <h1>📋 Audit Log</h1>
+  <div class="panel">
+    <table>
+      <tr><th>#</th><th>Admin</th><th>Action</th><th>Affected Record</th><th>Timestamp (UTC)</th></tr>
+      {% for log in logs %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ log.admin.username if log.admin else 'Unknown' }}</td>
+        <td><strong>{{ log.action_type }}</strong></td>
+        <td style="color:#aaa;">{{ log.affected_record or '—' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:#666;padding:2rem;">No audit entries yet.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+</body>
+</html>

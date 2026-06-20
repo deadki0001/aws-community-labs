@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup & Restore | Admin</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;min-height:100vh;}
+  nav{background:rgba(0,0,0,.8);padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+  .nav-brand{font-size:1.1rem;font-weight:700;color:#FF9900;text-decoration:none;}
+  .nav-links a{color:#ddd;text-decoration:none;margin-left:1.2rem;font-size:.88rem;}
+  .nav-links a:hover{color:#FF9900;}
+  .container{max-width:1100px;margin:0 auto;padding:2rem;}
+  h1{margin:0 0 1.5rem;}
+  .actions{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;}
+  .btn{padding:.7rem 1.4rem;border-radius:8px;font-size:.9rem;font-weight:700;border:none;cursor:pointer;}
+  .btn-primary{background:#FF9900;color:#000;}
+  .btn-outline{background:transparent;border:2px solid #FF9900;color:#FF9900;}
+  .btn-danger{background:#C62828;color:#fff;}
+  .btn-sm{padding:.35rem .8rem;font-size:.78rem;}
+  .btn:hover{opacity:.85;}
+  .panel{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.1);margin-bottom:1.5rem;overflow-x:auto;}
+  .panel h2{margin:0 0 1rem;color:#FF9900;font-size:1.1rem;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{background:rgba(255,153,0,.2);padding:.6rem .8rem;text-align:left;color:#FF9900;}
+  td{padding:.5rem .8rem;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle;}
+  .badge{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.72rem;font-weight:700;}
+  .badge-pass{background:#2E7D32;color:#fff;}
+  .badge-fail{background:#C62828;color:#fff;}
+  .badge-pending{background:#555;color:#fff;}
+  #result-box{background:rgba(0,0,0,.6);border:1px solid rgba(255,153,0,.4);border-radius:10px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:none;}
+  .drift-issue{color:#FF9900;font-size:.85rem;}
+  #toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#232F3E;color:#fff;padding:1rem 1.5rem;border-radius:10px;border-left:4px solid #FF9900;display:none;z-index:999;max-width:400px;}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <div class="nav-links">
+    <a href="/admin/dashboard">Dashboard</a>
+    <a href="/admin/users">Users</a>
+    <a href="/admin/audit-log">Audit Log</a>
+    <a href="/backup/" style="color:#FF9900;">Backup</a>
+    <a href="/reports/">Reports</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>🗄️ Backup & Restore</h1>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="createBackup()">📦 Backup Now</button>
+    <button class="btn btn-outline" onclick="driftCheck()">🔍 Database Drift Check</button>
+  </div>
+
+  <div id="result-box"></div>
+
+  <div class="panel">
+    <h2>Backup History</h2>
+    <table>
+      <tr><th>#</th><th>Type</th><th>Status</th><th>Size</th><th>Created</th><th>File</th><th>Actions</th></tr>
+      {% for b in backups %}
+      <tr id="brow-{{ b.id }}">
+        <td>{{ loop.index }}</td>
+        <td>{{ b.backup_type }}</td>
+        <td><span class="badge badge-{{ b.validation_status }}" id="bstatus-{{ b.id }}">{{ b.validation_status.upper() }}</span></td>
+        <td>{{ '%.1f KB'|format(b.file_size/1024) if b.file_size else '—' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '—' }}</td>
+        <td style="color:#888;font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ b.file_path.split('/')[-1] }}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="validateBackup({{ b.id }})">Validate</button>
+          {% if b.validation_status == 'pass' %}
+          <button class="btn btn-danger btn-sm" onclick="restoreBackup({{ b.id }}, '{{ b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else '' }}')">Restore</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:#666;padding:2rem;">No backups yet. Click "Backup Now" to create one.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>⚠️ Restore Instructions</h2>
+    <p style="color:#bbb;font-size:.88rem;">Before restoring:
+    <ol style="color:#bbb;font-size:.88rem;line-height:1.8;">
+      <li>A safety snapshot of the current database is automatically created before any restore operation.</li>
+      <li>Validate the target backup before restoring to confirm its integrity.</li>
+      <li>Restoring replaces the live database — all changes made after the backup date will be lost.</li>
+      <li>Only validated (PASS) backups can be used for restoration.</li>
+    </ol>
+    </p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+function showResult(html, isError) {
+  var box = document.getElementById('result-box');
+  box.innerHTML = html;
+  box.style.borderColor = isError ? '#C62828' : '#2E7D32';
+  box.style.display = 'block';
+  box.scrollIntoView({behavior:'smooth'});
+}
+function showToast(msg, err) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = err ? '#C62828' : '#FF9900';
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 4000);
+}
+function createBackup() {
+  showToast('Creating backup…');
+  fetch('/backup/create', {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.success) {
+        showResult(`✅ Backup created successfully.<br>Status: <strong>${d.status.toUpperCase()}</strong><br>Path: <code>${d.path}</code><br>Size: ${(d.size/1024).toFixed(1)} KB`, false);
+        setTimeout(()=>location.reload(), 2000);
+      } else {
+        showResult(`❌ Backup failed: ${d.error}`, true);
+      }
+    }).catch(e=>showResult('❌ Request failed: '+e, true));
+}
+function validateBackup(id) {
+  fetch('/backup/validate/'+id, {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.success) {
+        var el = document.getElementById('bstatus-'+id);
+        el.textContent = d.status.toUpperCase();
+        el.className = 'badge badge-'+d.status;
+        showToast('Validation complete: ' + d.status.toUpperCase(), d.status !== 'pass');
+        setTimeout(()=>location.reload(), 1500);
+      } else {
+        showToast(d.error || 'Validation failed', true);
+      }
+    });
+}
+function restoreBackup(id, dateStr) {
+  if (!confirm('Restore database to backup from ' + dateStr + '?\n\nAll data after this date will be lost. A safety snapshot will be created first.')) return;
+  showToast('Restoring… please wait.');
+  fetch('/backup/restore/'+id, {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.success) {
+        showResult('✅ ' + d.message, false);
+      } else {
+        showResult('❌ ' + (d.error || 'Restore failed'), true);
+      }
+    }).catch(e=>showResult('❌ Request failed: '+e, true));
+}
+function driftCheck() {
+  showToast('Checking schema…');
+  fetch('/backup/drift-check', {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      if (d.error) { showResult('❌ '+d.error, true); return; }
+      if (d.status === 'clean') {
+        showResult('✅ Database schema is <strong>CLEAN</strong> — no drift detected.', false);
+      } else {
+        var issues = d.issues.map(i=>`<li class="drift-issue">${i}</li>`).join('');
+        showResult(`⚠️ Schema drift detected (${d.issues.length} issue${d.issues.length>1?'s':''}):<ul>${issues}</ul>`, true);
+      }
+    }).catch(e=>showResult('❌ Request failed: '+e, true));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ path.title }} | AWS Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2235;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --accent: {{ path.color_primary }};
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; }
+
+        .nav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(10,14,26,0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-brand { font-size: 1.1rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+        .nav-links a { color: var(--muted); text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text); }
+
+        .hero {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 3rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '{{ path.icon }}';
+            position: absolute; right: 3rem; top: 50%;
+            transform: translateY(-50%);
+            font-size: 8rem; opacity: 0.08;
+        }
+        .hero-inner { max-width: 1100px; margin: 0 auto; }
+        .breadcrumb {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem;
+        }
+        .breadcrumb a { color: var(--muted); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--text); }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 0.35rem 0.9rem;
+            border-radius: 50px; font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1rem;
+        }
+        h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+        .hero-sub { color: var(--muted); font-size: 1rem; line-height: 1.6; max-width: 600px; margin-bottom: 2rem; }
+
+        .hero-stats {
+            display: flex; flex-wrap: wrap; gap: 1rem;
+        }
+        .stat {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 0.75rem 1.2rem;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .stat-icon { font-size: 1.1rem; }
+        .stat-value { font-weight: 700; font-size: 1rem; }
+        .stat-label { font-size: 0.75rem; color: var(--muted); }
+
+        .overall-progress {
+            margin-top: 2rem;
+        }
+        .progress-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem; color: var(--muted); margin-bottom: 0.6rem;
+        }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 1s ease; }
+
+        .main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
+
+        /* Module List */
+        .modules-section h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.01em; }
+        .module-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 1rem;
+            transition: border-color 0.2s, transform 0.2s;
+            text-decoration: none; color: var(--text); display: block;
+            position: relative; overflow: hidden;
+        }
+        .module-card:hover { border-color: rgba(255,255,255,0.15); transform: translateX(4px); }
+        .module-card.locked { opacity: 0.5; pointer-events: none; cursor: not-allowed; }
+        .module-card.completed::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: var(--success);
+        }
+        .module-card.in-progress::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: var(--accent);
+        }
+        .module-inner { padding: 1.5rem; display: flex; align-items: center; gap: 1.2rem; }
+        .mod-icon-wrap {
+            width: 52px; height: 52px; border-radius: 14px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; flex-shrink: 0;
+        }
+        .module-info { flex: 1; }
+        .module-num { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.25rem; }
+        .module-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .module-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+        .module-pts {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem; font-weight: 600; color: var(--accent);
+            white-space: nowrap;
+        }
+        .module-status {
+            display: flex; align-items: center; gap: 0.4rem;
+            font-size: 0.78rem; margin-top: 0.5rem;
+        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-dot.done { background: var(--success); }
+        .status-dot.progress { background: var(--accent); }
+        .status-dot.pending { background: var(--muted); }
+
+        /* Sidebar */
+        .sidebar {}
+        .sidebar-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .sidebar-card h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1.2rem; }
+
+        .point-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .point-row:last-child { border-bottom: none; }
+        .point-row .val { font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+
+        .cert-preview {
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 1.5rem; text-align: center;
+            background: linear-gradient(135deg, rgba(255,153,0,0.05), transparent);
+        }
+        .cert-preview .cert-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .cert-preview h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .cert-preview p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+        .btn-start {
+            display: block; width: 100%; margin-top: 1.2rem;
+            background: var(--accent); color: #000;
+            border: none; padding: 0.85rem; border-radius: 12px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; text-decoration: none; text-align: center; transition: opacity 0.2s;
+        }
+        .btn-start:hover { opacity: 0.9; }
+
+        @media (max-width: 768px) {
+            .main { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="{{ url_for('main.index') }}" class="nav-brand">☁️ AWS Learning Platform</a>
+        <div class="nav-links">
+            <a href="{{ url_for('learning.catalogue') }}">All Paths</a>
+            <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-inner">
+            <div class="breadcrumb">
+                <a href="{{ url_for('main.index') }}">Home</a>
+                <span>›</span>
+                <a href="{{ url_for('learning.catalogue') }}">Learning Paths</a>
+                <span>›</span>
+                <span>{{ path.title }}</span>
+            </div>
+
+            <div class="hero-badge">{{ path.difficulty }} · {{ path.cert_provider }}</div>
+            <h1>{{ path.icon }} {{ path.title }}</h1>
+            <p class="hero-sub">{{ path.description }}</p>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-icon">📋</span>
+                    <div>
+                        <div class="stat-value">{{ path.modules | length }}</div>
+                        <div class="stat-label">Modules</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">⏱</span>
+                    <div>
+                        <div class="stat-value">{{ path.estimated_hours }}h</div>
+                        <div class="stat-label">Estimated</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">⭐</span>
+                    <div>
+                        <div class="stat-value">{{ path.total_points }}</div>
+                        <div class="stat-label">Points</div>
+                    </div>
+                </div>
+                {% if progress %}
+                <div class="stat">
+                    <span class="stat-icon">🔥</span>
+                    <div>
+                        <div class="stat-value">{{ progress.total_points_earned }}</div>
+                        <div class="stat-label">Earned</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if progress %}
+            <div class="overall-progress" style="max-width:600px">
+                <div class="progress-row">
+                    <span>Overall Progress</span>
+                    <span style="color:var(--text);font-weight:600">{{ completion_pct }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width:{{ completion_pct }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="modules-section">
+            <h2>Course Modules</h2>
+
+            {% for module in path.modules %}
+            {% set mp = completed_modules.get(module.id) %}
+            {% set is_done = mp and mp.completed %}
+            {% set has_progress = mp and not is_done %}
+            {% set is_first = loop.first %}
+            {% set prev_done = loop.index0 == 0 or (completed_modules.get(path.modules[loop.index0-1].id) and completed_modules.get(path.modules[loop.index0-1].id).completed) %}
+
+            <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=module.id) }}"
+               class="module-card {{ 'completed' if is_done else 'in-progress' if has_progress else '' }}">
+                <div class="module-inner">
+                    <div class="mod-icon-wrap">{{ module.icon }}</div>
+                    <div class="module-info">
+                        <div class="module-num">Module {{ module.order_index }}</div>
+                        <div class="module-name">{{ module.title }}</div>
+                        <div class="module-desc">{{ module.description }}</div>
+                        <div class="module-status">
+                            {% if is_done %}
+                            <span class="status-dot done"></span>
+                            <span style="color:var(--success);font-size:0.78rem">Completed · Quiz: {{ mp.quiz_score }}%</span>
+                            {% elif has_progress %}
+                            <span class="status-dot progress"></span>
+                            <span style="color:var(--accent);font-size:0.78rem">In Progress · Attempts: {{ mp.quiz_attempts }}</span>
+                            {% else %}
+                            <span class="status-dot pending"></span>
+                            <span style="color:var(--muted);font-size:0.78rem">Not Started · {{ module.sections | length }} lessons + quiz</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="module-pts">+{{ module.points }}pts</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h3>Your Points</h3>
+                {% for module in path.modules %}
+                {% set mp = completed_modules.get(module.id) %}
+                <div class="point-row">
+                    <span>{{ module.icon }} {{ module.title }}</span>
+                    <span class="val">
+                        {% if mp and mp.completed %}{{ mp.points_earned }}{% else %}0{% endif %} / {{ module.points }}
+                    </span>
+                </div>
+                {% endfor %}
+                <div class="point-row" style="margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.75rem">
+                    <span style="font-weight:700">Total</span>
+                    <span class="val">{{ progress.total_points_earned if progress else 0 }} / {{ path.total_points }}</span>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Certification</h3>
+                <div class="cert-preview">
+                    <div class="cert-icon">🎓</div>
+                    <h4>{{ path.title }}</h4>
+                    <p>Complete all modules and pass the quizzes (70%+) to earn your official AWS Learning Platform certificate.</p>
+                    {% if progress and progress.completed_at %}
+                    <a href="{{ url_for('learning.my_certificates') }}" class="btn-start">View My Certificate</a>
+                    {% else %}
+                    <div style="margin-top:1rem;font-size:0.78rem;color:var(--muted);">
+                        {{ completion_pct }}% complete
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if not progress %}
+            <div class="sidebar-card">
+                <button class="btn-start enrol-btn" data-slug="{{ path.slug }}">
+                    🚀 Start This Path
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.enrol-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fetch(`/learning-paths/${btn.dataset.slug}/enrol`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) window.location.reload(); });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | AWS Community Labs</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;min-height:100vh;}
+  nav{background:rgba(0,0,0,.8);padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+  .nav-brand{font-size:1.1rem;font-weight:700;color:#FF9900;text-decoration:none;}
+  .nav-links a{color:#ddd;text-decoration:none;margin-left:1.2rem;font-size:.88rem;}
+  .nav-links a:hover{color:#FF9900;}
+  .container{max-width:1200px;margin:0 auto;padding:2rem;}
+  h1{margin:0 0 1.5rem;font-size:1.6rem;}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;}
+  .stat{background:rgba(0,0,0,.5);border-radius:10px;padding:1.2rem;text-align:center;border:1px solid rgba(255,153,0,.3);}
+  .stat .val{font-size:2rem;font-weight:700;color:#FF9900;}
+  .stat .lbl{font-size:.8rem;color:#aaa;margin-top:.2rem;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  .panel{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.1);}
+  .panel h2{margin:0 0 1rem;font-size:1.1rem;color:#FF9900;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{background:rgba(255,153,0,.2);padding:.5rem .7rem;text-align:left;color:#FF9900;}
+  td{padding:.5rem .7rem;border-bottom:1px solid rgba(255,255,255,.08);}
+  .badge{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.75rem;font-weight:700;}
+  .badge-pass{background:#2E7D32;color:#fff;}
+  .badge-fail{background:#C62828;color:#fff;}
+  .badge-admin{background:#FF9900;color:#000;}
+  .btn{display:inline-block;padding:.45rem 1rem;border-radius:6px;font-size:.85rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;}
+  .btn-primary{background:#FF9900;color:#000;}
+  .btn-outline{background:transparent;border:1px solid #FF9900;color:#FF9900;}
+  .btn:hover{opacity:.85;}
+  @media(max-width:700px){.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <div class="nav-links">
+    <a href="/admin/dashboard">Dashboard</a>
+    <a href="/admin/users">Users</a>
+    <a href="/admin/audit-log">Audit Log</a>
+    <a href="/backup/">Backup & Restore</a>
+    <a href="/reports/">Reports</a>
+    <a href="/">← Site</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>⚙️ Admin Dashboard</h1>
+
+  <div class="stats">
+    <div class="stat"><div class="val">{{ stats.total_users }}</div><div class="lbl">Total Users</div></div>
+    <div class="stat"><div class="val">{{ stats.active_users }}</div><div class="lbl">Active Users</div></div>
+    <div class="stat"><div class="val">{{ stats.admin_users }}</div><div class="lbl">Admin Users</div></div>
+    <div class="stat"><div class="val">{{ stats.total_scores }}</div><div class="lbl">Total Points Awarded</div></div>
+    <div class="stat"><div class="val">{{ stats.total_backups }}</div><div class="lbl">Total Backups</div></div>
+    <div class="stat"><div class="val">{{ stats.passed_backups }}</div><div class="lbl">Passed Validations</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Recent Admin Activity</h2>
+      <table>
+        <tr><th>Action</th><th>Record</th><th>When</th></tr>
+        {% for log in recent_logs %}
+        <tr>
+          <td>{{ log.action_type }}</td>
+          <td style="color:#aaa;font-size:.8rem;">{{ log.affected_record or '—' }}</td>
+          <td style="color:#aaa;font-size:.8rem;">{{ log.timestamp.strftime('%m-%d %H:%M') if log.timestamp else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color:#666;text-align:center;">No activity yet</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Recent Backups</h2>
+      <table>
+        <tr><th>Type</th><th>Status</th><th>Date</th></tr>
+        {% for b in recent_backups %}
+        <tr>
+          <td>{{ b.backup_type }}</td>
+          <td><span class="badge badge-{{ b.validation_status }}">{{ b.validation_status.upper() }}</span></td>
+          <td style="color:#aaa;font-size:.8rem;">{{ b.created_at.strftime('%m-%d %H:%M') if b.created_at else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color:#666;text-align:center;">No backups yet</td></tr>
+        {% endfor %}
+      </table>
+      <div style="margin-top:1rem;">
+        <a href="/backup/" class="btn btn-outline">Backup Console →</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+    <a href="/reports/" class="btn btn-outline">Generate Reports</a>
+    <a href="/backup/" class="btn btn-outline">Backup & Restore</a>
+    <a href="/admin/audit-log" class="btn btn-outline">View Audit Log</a>
+  </div>
+</div>
+</body>
+</html>

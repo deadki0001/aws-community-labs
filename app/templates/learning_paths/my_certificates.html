@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Certificates | AWS Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#6b7280;--aws:#FF9900;--gold:#D4AF37;--success:#10b981; }
+        * { box-sizing:border-box;margin:0;padding:0; }
+        body { background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh; }
+        .nav { position:sticky;top:0;z-index:100;background:rgba(10,14,26,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between; }
+        .nav-brand { font-size:1.1rem;font-weight:700;color:var(--aws);text-decoration:none; }
+        .nav-links a { color:var(--muted);text-decoration:none;margin-left:1.5rem;font-size:0.9rem; }
+        .container { max-width:900px;margin:0 auto;padding:3rem 2rem; }
+        h1 { font-size:2rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:0.5rem; }
+        .sub { color:var(--muted);margin-bottom:3rem; }
+
+        .cert-grid { display:grid;gap:1.5rem; }
+        .cert-card {
+            background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;
+            display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:center;
+            transition:border-color 0.2s,transform 0.2s;
+        }
+        .cert-card:hover { border-color:rgba(212,175,55,0.3);transform:translateY(-2px); }
+        .cert-icon { width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05));border:1px solid rgba(212,175,55,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem; }
+        .cert-info h3 { font-size:1.1rem;font-weight:700;margin-bottom:0.25rem; }
+        .cert-meta { font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem; }
+        .cert-code { font-family:monospace;font-size:0.75rem;color:var(--gold);background:rgba(212,175,55,0.08);padding:0.2rem 0.6rem;border-radius:4px; }
+        .btn-view { background:var(--gold);color:#000;border:none;padding:0.7rem 1.5rem;border-radius:10px;font-family:'Space Grotesk',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap; }
+        .btn-view:hover { opacity:0.9; }
+
+        .empty-state { text-align:center;padding:5rem 2rem; }
+        .empty-state .icon { font-size:4rem;margin-bottom:1.5rem; }
+        .empty-state h2 { font-size:1.4rem;font-weight:700;margin-bottom:0.75rem; }
+        .empty-state p { color:var(--muted);margin-bottom:2rem; }
+        .btn-primary { background:var(--aws);color:#000;border:none;padding:0.9rem 2rem;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;text-decoration:none; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="{{ url_for('main.index') }}" class="nav-brand">☁️ AWS Learning Platform</a>
+        <div class="nav-links">
+            <a href="{{ url_for('learning.catalogue') }}">Learning Paths</a>
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>🎓 My Certificates</h1>
+        <p class="sub">Your earned certificates of completion from the AWS Learning Platform.</p>
+
+        {% if certs %}
+        <div class="cert-grid">
+            {% for cert in certs %}
+            <div class="cert-card">
+                <div class="cert-icon">{{ cert.path.icon }}</div>
+                <div class="cert-info">
+                    <h3>{{ cert.path.title }}</h3>
+                    <div class="cert-meta">
+                        Issued to <strong>{{ cert.recipient_full_name }}</strong> ·
+                        {{ cert.issued_at.strftime('%B %d, %Y') }} ·
+                        {{ cert.total_points }} points earned
+                    </div>
+                    <span class="cert-code">{{ cert.cert_code }}</span>
+                </div>
+                <a href="{{ url_for('learning.view_certificate', cert_code=cert.cert_code) }}" class="btn-view">View Certificate</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🎓</div>
+            <h2>No certificates yet</h2>
+            <p>Complete a learning path and pass all module quizzes to earn your first certificate.</p>
+            <a href="{{ url_for('learning.catalogue') }}" class="btn-primary">Browse Learning Paths</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

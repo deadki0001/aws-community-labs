@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: {{ module.title }} | {{ path.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2235;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --accent: {{ path.color_primary }};
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; }
+
+        .quiz-header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 1.2rem 2rem; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .quiz-header-left { display: flex; align-items: center; gap: 1rem; }
+        .back-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+        .back-link:hover { color: var(--text); }
+        .quiz-title { font-size: 0.95rem; font-weight: 700; }
+        .quiz-subtitle { font-size: 0.75rem; color: var(--muted); }
+
+        .progress-header {
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .q-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem; color: var(--muted);
+        }
+        .progress-dots {
+            display: flex; gap: 4px;
+        }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--surface2); border: 1px solid var(--border);
+            transition: background 0.3s;
+        }
+        .dot.answered { background: var(--accent); border-color: var(--accent); }
+
+        .quiz-body {
+            max-width: 780px; margin: 0 auto; padding: 2.5rem 2rem;
+        }
+
+        /* Pass/Fail info */
+        .pass-info {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.2rem 1.5rem; margin-bottom: 2rem;
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .pass-info-icon { font-size: 1.5rem; }
+        .pass-info-text { font-size: 0.85rem; color: var(--muted); }
+        .pass-info-text strong { color: var(--text); }
+
+        {% if mod_progress and mod_progress.quiz_passed %}
+        .pass-info { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); }
+        {% endif %}
+
+        /* Questions */
+        .question-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+        .question-card.answered-correct { border-color: rgba(16,185,129,0.4); }
+        .question-card.answered-wrong { border-color: rgba(239,68,68,0.4); }
+
+        .q-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+        .q-num {
+            min-width: 32px; height: 32px; border-radius: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 800; color: var(--accent); flex-shrink: 0;
+        }
+        .q-text { font-size: 1rem; font-weight: 600; line-height: 1.5; }
+
+        .options { display: grid; gap: 0.6rem; }
+        .option {
+            display: flex; align-items: center; gap: 1rem;
+            background: var(--surface2); border: 2px solid var(--border);
+            border-radius: 12px; padding: 0.9rem 1.1rem;
+            cursor: pointer; transition: all 0.15s;
+            text-align: left; width: 100%;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;
+            color: var(--text);
+        }
+        .option:hover:not(:disabled) { border-color: var(--accent); background: rgba(255,153,0,0.06); }
+        .option.selected { border-color: var(--accent); background: rgba(255,153,0,0.08); }
+        .option.correct { border-color: var(--success); background: rgba(16,185,129,0.1); }
+        .option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.08); }
+        .option:disabled { cursor: default; }
+
+        .option-letter {
+            min-width: 28px; height: 28px; border-radius: 8px;
+            border: 2px solid var(--border); display: flex; align-items: center;
+            justify-content: center; font-size: 0.78rem; font-weight: 800;
+            flex-shrink: 0; transition: 0.15s;
+        }
+        .option.selected .option-letter { border-color: var(--accent); color: var(--accent); }
+        .option.correct .option-letter { border-color: var(--success); background: var(--success); color: #fff; }
+        .option.wrong .option-letter { border-color: var(--danger); background: var(--danger); color: #fff; }
+
+        .explanation {
+            margin-top: 1rem; padding: 1rem 1.2rem;
+            background: rgba(255,255,255,0.03); border-radius: 10px;
+            border-left: 3px solid var(--success);
+            font-size: 0.85rem; color: rgba(232,234,240,0.8); line-height: 1.6;
+            display: none;
+        }
+        .explanation.wrong-exp { border-left-color: var(--danger); }
+        .explanation.show { display: block; }
+
+        /* Actions */
+        .quiz-actions {
+            text-align: center; padding: 2rem 0;
+        }
+        .btn-submit {
+            background: var(--accent); color: #000;
+            border: none; padding: 1rem 3rem;
+            border-radius: 14px; font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
+            transition: opacity 0.2s; opacity: 0.4;
+        }
+        .btn-submit.ready { opacity: 1; }
+        .btn-submit:hover.ready { opacity: 0.9; }
+
+        /* Results overlay */
+        .results-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            z-index: 100; align-items: center; justify-content: center;
+        }
+        .results-overlay.show { display: flex; }
+        .results-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 24px; padding: 3rem; max-width: 480px; width: 90%;
+            text-align: center;
+        }
+        .result-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .result-score {
+            font-size: 4rem; font-weight: 800; letter-spacing: -0.04em;
+            font-family: 'JetBrains Mono', monospace; margin-bottom: 0.5rem;
+        }
+        .result-score.pass { color: var(--success); }
+        .result-score.fail { color: var(--danger); }
+        .result-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .result-sub { color: var(--muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 2rem; }
+        .result-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+        .btn-result {
+            padding: 0.9rem; border-radius: 12px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; border: none; text-decoration: none; display: block; text-align: center;
+            transition: opacity 0.2s;
+        }
+        .btn-result.primary { background: var(--success); color: #fff; }
+        .btn-result.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-result:hover { opacity: 0.85; }
+
+        .points-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(255,153,0,0.1); border: 1px solid rgba(255,153,0,0.3);
+            color: var(--accent); padding: 0.5rem 1.2rem; border-radius: 50px;
+            font-weight: 700; font-size: 0.9rem; margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-header">
+        <div class="quiz-header-left">
+            <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=module.id) }}" class="back-link">← Back to Lesson</a>
+            <div>
+                <div class="quiz-title">📝 Quiz · {{ module.title }}</div>
+                <div class="quiz-subtitle">{{ path.title }} · Pass mark: 70%</div>
+            </div>
+        </div>
+        <div class="progress-header">
+            <span class="q-counter">0 / {{ questions | length }} answered</span>
+            <div class="progress-dots" id="dots">
+                {% for q in questions %}
+                <div class="dot" id="dot-{{ loop.index0 }}"></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-body">
+        <div class="pass-info">
+            <span class="pass-info-icon">{% if mod_progress and mod_progress.quiz_passed %}🏆{% else %}🎯{% endif %}</span>
+            <div class="pass-info-text">
+                {% if mod_progress and mod_progress.quiz_passed %}
+                    <strong>You already passed this quiz ({{ mod_progress.quiz_score }}%).</strong> You can retake to improve your knowledge.
+                {% else %}
+                    Answer all <strong>{{ questions | length }} questions</strong> and score at least <strong>70%</strong> to complete this module and earn <strong>{{ module.points }} points</strong>.
+                    {% if mod_progress and mod_progress.quiz_attempts %}
+                    Attempts so far: <strong>{{ mod_progress.quiz_attempts }}</strong>.
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% for question in questions %}
+        <div class="question-card" id="qcard-{{ question.id }}" data-qid="{{ question.id }}">
+            <div class="q-header">
+                <div class="q-num">{{ loop.index }}</div>
+                <div class="q-text">{{ question.question_text }}</div>
+            </div>
+            <div class="options">
+                {% for letter, text in [('A', question.option_a), ('B', question.option_b), ('C', question.option_c), ('D', question.option_d)] %}
+                <button class="option" data-qid="{{ question.id }}" data-ans="{{ letter }}" onclick="selectAnswer(this)">
+                    <span class="option-letter">{{ letter }}</span>
+                    {{ text }}
+                </button>
+                {% endfor %}
+            </div>
+            <div class="explanation" id="exp-{{ question.id }}"></div>
+        </div>
+        {% endfor %}
+
+        <div class="quiz-actions">
+            <button class="btn-submit" id="submitBtn" onclick="submitQuiz()">
+                Submit Quiz
+            </button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-overlay" id="resultsOverlay">
+        <div class="results-card">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-score" id="resultScore"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div id="pointsBadge"></div>
+            <div class="result-sub" id="resultSub"></div>
+            <div class="result-actions">
+                <button class="btn-result primary" onclick="closeResults()">Review Answers</button>
+                <a href="{{ url_for('learning.path_detail', slug=path.slug) }}" class="btn-result secondary">Back to Path</a>
+                {% if next_mod %}
+                <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=next_mod.id) }}" id="nextModBtn" class="btn-result secondary" style="display:none">Continue → {{ next_mod.title }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const answers = {};
+        const totalQ = {{ questions | length }};
+        const pathSlug = '{{ path.slug }}';
+        const moduleId = {{ module.id }};
+
+        function selectAnswer(btn) {
+            const qid = btn.dataset.qid;
+            const ans = btn.dataset.ans;
+
+            // Clear other selections in this question
+            btn.closest('.options').querySelectorAll('.option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            answers[qid] = ans;
+
+            // Update dot
+            const idx = Object.keys(answers).length;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const count = Object.keys(answers).length;
+            document.querySelector('.q-counter').textContent = count + ' / ' + totalQ + ' answered';
+
+            // Update dots
+            document.querySelectorAll('.question-card').forEach((card, i) => {
+                const qid = card.dataset.qid;
+                const dot = document.getElementById('dot-' + i);
+                if (answers[qid]) dot.classList.add('answered');
+            });
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (count === totalQ) {
+                submitBtn.classList.add('ready');
+            }
+        }
+
+        function submitQuiz() {
+            if (Object.keys(answers).length < totalQ) {
+                alert('Please answer all ' + totalQ + ' questions before submitting.');
+                return;
+            }
+
+            fetch(`/learning-paths/${pathSlug}/module/${moduleId}/quiz/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers })
+            })
+            .then(r => r.json())
+            .then(data => {
+                showResults(data);
+                applyFeedback(data.feedback);
+            });
+        }
+
+        function applyFeedback(feedback) {
+            feedback.forEach(item => {
+                const card = document.getElementById('qcard-' + item.id);
+                const exp = document.getElementById('exp-' + item.id);
+
+                // Mark options
+                card.querySelectorAll('.option').forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.dataset.ans === item.correct_answer) {
+                        btn.classList.add('correct');
+                    } else if (btn.dataset.ans === item.your_answer && !item.is_correct) {
+                        btn.classList.add('wrong');
+                    }
+                });
+
+                // Show explanation
+                if (item.explanation) {
+                    exp.textContent = (item.is_correct ? '✅ ' : '❌ ') + item.explanation;
+                    exp.classList.add('show');
+                    if (!item.is_correct) exp.classList.add('wrong-exp');
+                }
+
+                card.classList.add(item.is_correct ? 'answered-correct' : 'answered-wrong');
+            });
+        }
+
+        function showResults(data) {
+            const overlay = document.getElementById('resultsOverlay');
+            const icon = document.getElementById('resultIcon');
+            const score = document.getElementById('resultScore');
+            const title = document.getElementById('resultTitle');
+            const sub = document.getElementById('resultSub');
+            const pointsBadge = document.getElementById('pointsBadge');
+            const nextBtn = document.getElementById('nextModBtn');
+
+            overlay.classList.add('show');
+
+            if (data.passed) {
+                icon.textContent = '🎉';
+                score.textContent = data.score + '%';
+                score.className = 'result-score pass';
+                title.textContent = 'Quiz Passed!';
+                sub.textContent = `You answered ${data.correct} out of ${data.total} questions correctly. Module complete!`;
+                if (data.points_earned > 0) {
+                    pointsBadge.innerHTML = `<span class="points-badge">⭐ +${data.points_earned} points earned</span>`;
+                }
+                if (nextBtn) nextBtn.style.display = 'block';
+            } else {
+                icon.textContent = '📚';
+                score.textContent = data.score + '%';
+                score.className = 'result-score fail';
+                title.textContent = 'Not Quite There Yet';
+                sub.textContent = `You scored ${data.correct}/${data.total}. You need 70% to pass. Review the explanations below and try again!`;
+            }
+        }
+
+        function closeResults() {
+            document.getElementById('resultsOverlay').classList.remove('show');
+        }
+
+        // Check for next_mod reference
+        {% if next_mod %}
+        window._nextModId = {{ next_mod.id }};
+        {% endif %}
+    </script>
+</body>
+</html>

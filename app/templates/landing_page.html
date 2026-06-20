@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | AWS Community Labs</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;min-height:100vh;}
+  nav{background:rgba(0,0,0,.7);padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .nav-brand{font-size:1.2rem;font-weight:700;color:#FF9900;text-decoration:none;}
+  .nav-links a{color:#ddd;text-decoration:none;margin-left:1.5rem;font-size:.9rem;}
+  .nav-links a:hover{color:#FF9900;}
+  .nav-user{font-size:.85rem;color:#aaa;}
+  .container{max-width:1100px;margin:0 auto;padding:2rem;}
+  .welcome{text-align:center;padding:2rem 0 1.5rem;}
+  .welcome h1{font-size:2rem;margin:0 0 .5rem;}
+  .welcome p{color:#ddd;font-size:1rem;}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.2rem;margin:1.5rem 0;}
+  .stat-card{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;text-align:center;border:1px solid rgba(255,153,0,.3);}
+  .stat-card .val{font-size:2.2rem;font-weight:700;color:#FF9900;}
+  .stat-card .lbl{font-size:.85rem;color:#aaa;margin-top:.3rem;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;margin-top:2rem;}
+  .card{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.1);transition:border-color .2s;}
+  .card:hover{border-color:#FF9900;}
+  .card h3{margin:0 0 .6rem;font-size:1.1rem;display:flex;align-items:center;gap:.5rem;}
+  .card p{color:#bbb;font-size:.88rem;margin:0 0 1rem;}
+  .btn-card{display:inline-block;padding:.5rem 1.2rem;background:#FF9900;color:#000;font-weight:700;border-radius:8px;text-decoration:none;font-size:.9rem;}
+  .btn-card:hover{background:#e68a00;}
+  {% if user.role == 'admin' %}
+  .admin-badge{display:inline-block;background:#FF9900;color:#000;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;margin-left:.5rem;vertical-align:middle;}
+  {% endif %}
+</style>
+</head>
+<body>
+
+<!-- Wizard overlay -->
+{% if show_wizard %}
+<div id="wizard-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#1a1a2e;border:2px solid #FF9900;border-radius:16px;padding:2.5rem;max-width:540px;width:90%;text-align:center;">
+    <div id="wizard-step-1">
+      <div style="font-size:3rem;">☁️</div>
+      <h2 style="color:#FF9900;margin:.5rem 0;">Welcome to AWS Community Labs!</h2>
+      <p style="color:#ccc;">Hi <strong>{{ user.username }}</strong> — you've joined South Africa's free cloud learning platform. Let's show you around.</p>
+      <button onclick="showStep(2)" style="padding:.7rem 2rem;background:#FF9900;color:#000;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:1rem;">Get Started →</button>
+    </div>
+    <div id="wizard-step-2" style="display:none;">
+      <div style="font-size:2rem;">📚 🖥️ 🏆 📊 🎖️</div>
+      <h2 style="color:#FF9900;">Platform Tour</h2>
+      <p style="color:#ccc;text-align:left;">The platform has five core areas:</p>
+      <ul style="text-align:left;color:#bbb;line-height:1.9;">
+        <li><strong>Learning Paths</strong> — AWS certification-aligned modules with quizzes</li>
+        <li><strong>Challenges</strong> — Practise real AWS CLI commands in your browser</li>
+        <li><strong>Leaderboard</strong> — See how you rank against other learners</li>
+        <li><strong>Certificates</strong> — Download proof of your achievements</li>
+        <li><strong>Labs</strong> — Guided hands-on lab environments</li>
+      </ul>
+      <button onclick="showStep(3)" style="padding:.7rem 2rem;background:#FF9900;color:#000;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:.5rem;">Next →</button>
+    </div>
+    <div id="wizard-step-3" style="display:none;">
+      <div style="font-size:3rem;">🎯</div>
+      <h2 style="color:#FF9900;">Your Learning Goal</h2>
+      <p style="color:#ccc;">What are you here to achieve?</p>
+      <div id="goal-options" style="display:flex;flex-direction:column;gap:.6rem;margin:1rem 0;">
+        <button class="goal-btn" onclick="selectGoal(this,'AWS Certification')" style="padding:.7rem;background:rgba(255,153,0,.15);border:1px solid #FF9900;color:#fff;border-radius:8px;cursor:pointer;">🏅 Prepare for AWS Certification</button>
+        <button class="goal-btn" onclick="selectGoal(this,'Job Readiness')" style="padding:.7rem;background:rgba(255,153,0,.15);border:1px solid #FF9900;color:#fff;border-radius:8px;cursor:pointer;">💼 Improve Job Prospects</button>
+        <button class="goal-btn" onclick="selectGoal(this,'General Knowledge')" style="padding:.7rem;background:rgba(255,153,0,.15);border:1px solid #FF9900;color:#fff;border-radius:8px;cursor:pointer;">☁️ General Cloud Knowledge</button>
+      </div>
+      <button onclick="showStep(4)" id="goal-next" style="padding:.7rem 2rem;background:#555;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;margin-top:.5rem;" disabled>Next →</button>
+    </div>
+    <div id="wizard-step-4" style="display:none;">
+      <div style="font-size:3rem;">🚀</div>
+      <h2 style="color:#FF9900;">You're Ready!</h2>
+      <p style="color:#ccc;">Start with the <strong>AWS Cloud Practitioner</strong> path — the recommended first step for all new cloud learners.</p>
+      <a href="/learning-paths/aws-cloud-practitioner" style="display:inline-block;padding:.8rem 2rem;background:#FF9900;color:#000;font-weight:700;border-radius:8px;text-decoration:none;margin-top:1rem;">Begin Learning →</a>
+      <br><button onclick="closeWizard()" style="margin-top:.8rem;background:none;border:none;color:#888;font-size:.85rem;cursor:pointer;text-decoration:underline;">Skip for now</button>
+    </div>
+    <div style="margin-top:1.5rem;display:flex;justify-content:center;gap:.4rem;">
+      <span id="dot1" style="width:10px;height:10px;border-radius:50%;background:#FF9900;display:inline-block;"></span>
+      <span id="dot2" style="width:10px;height:10px;border-radius:50%;background:#555;display:inline-block;"></span>
+      <span id="dot3" style="width:10px;height:10px;border-radius:50%;background:#555;display:inline-block;"></span>
+      <span id="dot4" style="width:10px;height:10px;border-radius:50%;background:#555;display:inline-block;"></span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<nav>
+  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <div class="nav-links">
+    <a href="/learning-paths">Learning Paths</a>
+    <a href="/challenges">Challenges</a>
+    <a href="/leaderboard">Leaderboard</a>
+    <a href="/my-certificates">Certificates</a>
+    {% if user.role == 'admin' %}
+    <a href="/admin/dashboard" style="color:#FF9900;">⚙️ Admin</a>
+    {% endif %}
+  </div>
+  <div class="nav-user">
+    {{ user.username }}
+    {% if user.role == 'admin' %}<span class="admin-badge">ADMIN</span>{% endif %}
+    &nbsp;|&nbsp;<a href="/logout" style="color:#aaa;text-decoration:none;">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="welcome">
+    <h1>Welcome back, {{ user.username }}! 👋</h1>
+    <p>Your cloud learning journey continues here.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="val">{{ total_score }}</div>
+      <div class="lbl">Total Points</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{ completed_challenges }}</div>
+      <div class="lbl">Challenges Completed</div>
+    </div>
+    <div class="stat-card" id="cert-count-card">
+      <div class="val">—</div>
+      <div class="lbl">Certificates Earned</div>
+    </div>
+    <div class="stat-card" id="path-count-card">
+      <div class="val">—</div>
+      <div class="lbl">Paths In Progress</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>📚 Learning Paths</h3>
+      <p>Follow structured AWS certification-aligned modules with quizzes and certificates.</p>
+      <a class="btn-card" href="/learning-paths">Browse Paths</a>
+    </div>
+    <div class="card">
+      <h3>🖥️ CLI Challenges</h3>
+      <p>Practise real AWS CLI commands in your browser and earn points for each one.</p>
+      <a class="btn-card" href="/challenges">Start Challenges</a>
+    </div>
+    <div class="card">
+      <h3>🏆 Leaderboard</h3>
+      <p>See where you rank among all learners on the platform.</p>
+      <a class="btn-card" href="/leaderboard">View Leaderboard</a>
+    </div>
+    <div class="card">
+      <h3>🎖️ My Certificates</h3>
+      <p>Download and share your earned certificates.</p>
+      <a class="btn-card" href="/my-certificates">View Certificates</a>
+    </div>
+    <div class="card">
+      <h3>🔬 Hands-On Labs</h3>
+      <p>Interactive guided lab sessions for deeper AWS practice.</p>
+      <a class="btn-card" href="/labs">Open Labs</a>
+    </div>
+    {% if user.role == 'admin' %}
+    <div class="card" style="border-color:rgba(255,153,0,.5);">
+      <h3>⚙️ Admin Panel</h3>
+      <p>Manage users, generate reports, and handle database backups.</p>
+      <a class="btn-card" href="/admin/dashboard">Open Admin</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// Wizard logic
+var currentStep = 1;
+var selectedGoal = '';
+
+function showStep(n) {
+  document.getElementById('wizard-step-'+currentStep).style.display='none';
+  document.getElementById('dot'+currentStep).style.background='#555';
+  currentStep = n;
+  document.getElementById('wizard-step-'+n).style.display='block';
+  document.getElementById('dot'+n).style.background='#FF9900';
+}
+
+function selectGoal(btn, goal) {
+  selectedGoal = goal;
+  document.querySelectorAll('.goal-btn').forEach(b => b.style.background='rgba(255,153,0,.15)');
+  btn.style.background='rgba(255,153,0,.4)';
+  document.getElementById('goal-next').disabled = false;
+  document.getElementById('goal-next').style.background='#FF9900';
+  document.getElementById('goal-next').style.color='#000';
+}
+
+function closeWizard() {
+  fetch('/wizard-complete', {method:'POST'});
+  document.getElementById('wizard-overlay').style.display='none';
+}
+
+// Load progress stats
+fetch('/api/my-progress').then(r=>r.json()).then(data=>{
+  var inProgress = data.filter(p=>!p.completed).length;
+  document.getElementById('path-count-card').querySelector('.val').textContent = inProgress;
+});
+
+fetch('/my-certificates').then(()=>{}).catch(()=>{});
+// Get cert count from DOM if available
+</script>
+</body>
+</html>

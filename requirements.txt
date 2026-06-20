@@ -1,0 +1,10 @@
+flask>=3.0.0
+flask-sqlalchemy>=3.1.0
+flask-mail>=0.9.1
+flask-migrate>=4.0.0
+werkzeug>=3.0.0
+reportlab>=4.0.0
+apscheduler>=3.10.0
+boto3>=1.34.0
+requests>=2.31.0
+python-dotenv>=1.0.0

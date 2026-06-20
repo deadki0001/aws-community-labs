@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ module.title }} | {{ path.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2235;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --accent: {{ path.color_primary }};
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; }
+
+        .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+        /* Sidebar Nav */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            position: sticky; top: 0; height: 100vh;
+            overflow-y: auto; padding: 1.5rem 0;
+        }
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+        .sidebar-back {
+            display: flex; align-items: center; gap: 0.5rem;
+            color: var(--muted); text-decoration: none; font-size: 0.82rem;
+            margin-bottom: 0.75rem;
+        }
+        .sidebar-back:hover { color: var(--text); }
+        .sidebar-path-name { font-size: 0.9rem; font-weight: 700; }
+
+        .section-nav { padding: 0 0.75rem; }
+        .section-nav-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 0.75rem; border-radius: 10px;
+            cursor: pointer; transition: background 0.15s;
+            margin-bottom: 0.25rem;
+            font-size: 0.83rem; color: var(--muted);
+        }
+        .section-nav-item:hover { background: var(--surface2); color: var(--text); }
+        .section-nav-item.active { background: rgba(255,153,0,0.08); color: var(--text); }
+        .section-nav-item.active { color: var(--accent); }
+        .section-num {
+            width: 22px; height: 22px; border-radius: 6px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+        }
+        .section-nav-item.active .section-num { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        .quiz-nav-item {
+            margin: 1rem 0.75rem 0;
+            background: linear-gradient(135deg, rgba(255,153,0,0.1), rgba(255,153,0,0.05));
+            border: 1px solid rgba(255,153,0,0.2);
+            border-radius: 12px; padding: 1rem;
+            text-align: center;
+        }
+        .quiz-nav-item a {
+            color: var(--accent); text-decoration: none; font-weight: 700; font-size: 0.85rem;
+            display: block;
+        }
+        {% if mod_progress and mod_progress.quiz_passed %}
+        .quiz-nav-item { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); }
+        .quiz-nav-item a { color: var(--success); }
+        {% endif %}
+
+        /* Main content */
+        .main-content { padding: 0; display: flex; flex-direction: column; }
+
+        .content-header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2.5rem; display: flex; align-items: center; justify-content: space-between;
+        }
+        .module-title-block {}
+        .module-breadcrumb { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
+        .module-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+
+        .header-actions { display: flex; gap: 0.75rem; }
+        .btn { padding: 0.65rem 1.2rem; border-radius: 10px; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: 0.2s; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-outline:hover { background: var(--surface2); color: var(--text); }
+        .btn-accent { background: var(--accent); color: #000; }
+        .btn-accent:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); color: #fff; }
+
+        /* Lesson sections */
+        .sections-container { flex: 1; padding: 2.5rem; max-width: 860px; }
+
+        .lesson-section {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem;
+            transition: border-color 0.2s;
+        }
+        .lesson-section.active-section { border-color: rgba(255,153,0,0.3); }
+
+        .lesson-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+        .lesson-num-badge {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--accent); color: #000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 800; flex-shrink: 0;
+        }
+        .lesson-title { font-size: 1.1rem; font-weight: 700; }
+
+        .lesson-content {
+            color: rgba(232,234,240,0.85);
+            line-height: 1.75;
+            font-size: 0.95rem;
+        }
+        .lesson-content h4 {
+            font-size: 1rem; font-weight: 700; margin: 1.5rem 0 0.75rem;
+            color: var(--text);
+        }
+        .lesson-content p { margin-bottom: 1rem; }
+        .lesson-content ul, .lesson-content ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+        .lesson-content li { margin-bottom: 0.4rem; }
+        .lesson-content strong { color: var(--text); font-weight: 600; }
+        .lesson-content code {
+            background: rgba(255,255,255,0.06); padding: 0.1rem 0.4rem;
+            border-radius: 4px; font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .lesson-content table {
+            width: 100%; border-collapse: collapse; margin: 1rem 0;
+            font-size: 0.88rem;
+        }
+
+        /* Navigation footer */
+        .nav-footer {
+            background: var(--surface); border-top: 1px solid var(--border);
+            padding: 1.5rem 2.5rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .nav-foot-info { font-size: 0.8rem; color: var(--muted); }
+
+        /* Complete button */
+        .complete-bar {
+            background: rgba(255,153,0,0.06); border-top: 1px solid rgba(255,153,0,0.15);
+            padding: 1.2rem 2.5rem; display: flex; align-items: center; justify-content: space-between;
+        }
+        .complete-bar p { font-size: 0.85rem; color: var(--muted); }
+        {% if mod_progress and mod_progress.completed %}
+        .complete-bar { background: rgba(16,185,129,0.06); border-top-color: rgba(16,185,129,0.2); }
+        {% endif %}
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('learning.path_detail', slug=path.slug) }}" class="sidebar-back">
+                    ← Back to path
+                </a>
+                <div class="sidebar-path-name">{{ path.icon }} {{ path.title }}</div>
+            </div>
+
+            <div class="section-nav">
+                <div style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0 0.75rem;margin-bottom:0.75rem">
+                    {{ module.icon }} {{ module.title }}
+                </div>
+                {% for section in module.sections %}
+                <div class="section-nav-item {% if loop.first %}active{% endif %}" onclick="scrollToSection('section-{{ section.id }}', this)">
+                    <div class="section-num">{{ section.order_index }}</div>
+                    {{ section.title }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="quiz-nav-item">
+                {% if mod_progress and mod_progress.quiz_passed %}
+                ✅ Quiz Passed ({{ mod_progress.quiz_score }}%)
+                <a href="{{ url_for('learning.quiz_view', slug=path.slug, module_id=module.id) }}">Retake Quiz</a>
+                {% else %}
+                <a href="{{ url_for('learning.quiz_view', slug=path.slug, module_id=module.id) }}">
+                    📝 Take Module Quiz → +{{ module.points }}pts
+                </a>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main-content">
+            <div class="content-header">
+                <div class="module-title-block">
+                    <div class="module-breadcrumb">Module {{ module.order_index }} of {{ path.modules | length }}</div>
+                    <div class="module-title">{{ module.icon }} {{ module.title }}</div>
+                </div>
+                <div class="header-actions">
+                    {% if prev_mod %}
+                    <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=prev_mod.id) }}" class="btn btn-outline">← Previous</a>
+                    {% endif %}
+                    {% if next_mod %}
+                    <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=next_mod.id) }}" class="btn btn-accent">Next Module →</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sections-container">
+                {% for section in module.sections %}
+                <div class="lesson-section {% if loop.first %}active-section{% endif %}" id="section-{{ section.id }}">
+                    <div class="lesson-header">
+                        <div class="lesson-num-badge">{{ section.order_index }}</div>
+                        <h2 class="lesson-title">{{ section.title }}</h2>
+                    </div>
+                    <div class="lesson-content">
+                        {{ section.content | safe }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="complete-bar">
+                <p>
+                    {% if mod_progress and mod_progress.completed %}
+                    ✅ You completed this module. Quiz score: <strong>{{ mod_progress.quiz_score }}%</strong>
+                    {% else %}
+                    Finished reading? Take the quiz to earn <strong>{{ module.points }} points</strong>.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('learning.quiz_view', slug=path.slug, module_id=module.id) }}"
+                   class="btn {% if mod_progress and mod_progress.completed %}btn-success{% else %}btn-accent{% endif %}">
+                    {% if mod_progress and mod_progress.completed %}View Quiz Results{% else %}Take Quiz →{% endif %}
+                </a>
+            </div>
+
+            <div class="nav-footer">
+                <span class="nav-foot-info">{{ path.icon }} {{ path.title }} · Module {{ module.order_index }}</span>
+                <div style="display:flex;gap:0.75rem">
+                    {% if prev_mod %}
+                    <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=prev_mod.id) }}" class="btn btn-outline">← {{ prev_mod.title }}</a>
+                    {% endif %}
+                    {% if next_mod %}
+                    <a href="{{ url_for('learning.module_view', slug=path.slug, module_id=next_mod.id) }}" class="btn btn-accent">{{ next_mod.title }} →</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function scrollToSection(id, navItem) {
+            document.querySelectorAll('.section-nav-item').forEach(n => n.classList.remove('active'));
+            navItem.classList.add('active');
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Intersection observer to highlight sidebar nav as user scrolls
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    document.querySelectorAll('.section-nav-item').forEach(n => n.classList.remove('active'));
+                    document.querySelectorAll('.lesson-section').forEach(s => s.classList.remove('active-section'));
+                    entry.target.classList.add('active-section');
+                    const idx = Array.from(document.querySelectorAll('.lesson-section')).indexOf(entry.target);
+                    const navItems = document.querySelectorAll('.section-nav-item');
+                    if (navItems[idx]) navItems[idx].classList.add('active');
+                }
+            });
+        }, { threshold: 0.3 });
+        document.querySelectorAll('.lesson-section').forEach(s => observer.observe(s));
+
+        // Mark as read after 5 seconds on page
+        setTimeout(() => {
+            fetch('{{ url_for("learning.mark_module_read", slug=path.slug, module_id=module.id) }}', { method: 'POST' });
+        }, 5000);
+    </script>
+</body>
+</html>

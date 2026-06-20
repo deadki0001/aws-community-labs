@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Users | Admin</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a73e8,#ff6f00);color:#fff;min-height:100vh;}
+  nav{background:rgba(0,0,0,.8);padding:.8rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+  .nav-brand{font-size:1.1rem;font-weight:700;color:#FF9900;text-decoration:none;}
+  .nav-links a{color:#ddd;text-decoration:none;margin-left:1.2rem;font-size:.88rem;}
+  .nav-links a:hover{color:#FF9900;}
+  .container{max-width:1200px;margin:0 auto;padding:2rem;}
+  h1{margin:0 0 1.2rem;}
+  .search-bar{display:flex;gap:.8rem;margin-bottom:1.5rem;}
+  .search-bar input{flex:1;padding:.65rem 1rem;border-radius:8px;border:1px solid #444;background:#1a1a2e;color:#fff;font-size:.95rem;}
+  .search-bar input:focus{outline:none;border-color:#FF9900;}
+  .search-bar button{padding:.65rem 1.4rem;background:#FF9900;color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;}
+  .panel{background:rgba(0,0,0,.5);border-radius:12px;padding:1.5rem;border:1px solid rgba(255,255,255,.1);overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:750px;}
+  th{background:rgba(255,153,0,.2);padding:.6rem .8rem;text-align:left;color:#FF9900;}
+  td{padding:.55rem .8rem;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle;}
+  .badge{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.72rem;font-weight:700;}
+  .badge-admin{background:#FF9900;color:#000;}
+  .badge-user{background:#444;color:#fff;}
+  .badge-active{background:#2E7D32;color:#fff;}
+  .badge-inactive{background:#C62828;color:#fff;}
+  .actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+  .btn{padding:.3rem .7rem;border-radius:5px;font-size:.78rem;font-weight:700;border:none;cursor:pointer;}
+  .btn-danger{background:#C62828;color:#fff;}
+  .btn-success{background:#2E7D32;color:#fff;}
+  .btn-warn{background:#FF9900;color:#000;}
+  .btn-muted{background:#555;color:#fff;}
+  .btn:hover{opacity:.85;}
+  #toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#232F3E;color:#fff;padding:1rem 1.5rem;border-radius:10px;border-left:4px solid #FF9900;display:none;z-index:999;}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-brand" href="/">☁️ AWS Community Labs</a>
+  <div class="nav-links">
+    <a href="/admin/dashboard">Dashboard</a>
+    <a href="/admin/users" style="color:#FF9900;">Users</a>
+    <a href="/admin/audit-log">Audit Log</a>
+    <a href="/backup/">Backup</a>
+    <a href="/reports/">Reports</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+<div class="container">
+  <h1>👥 User Management</h1>
+  <form class="search-bar" method="GET">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search username or email…">
+    <button type="submit">Search</button>
+  </form>
+  <div class="panel">
+    <table>
+      <tr>
+        <th>#</th><th>Username</th><th>Email</th><th>Role</th>
+        <th>Status</th><th>Points</th><th>Joined</th><th>Last Login</th><th>Actions</th>
+      </tr>
+      {% for user in users %}
+      <tr id="row-{{ user.id }}">
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ user.username }}</strong></td>
+        <td style="color:#aaa;">{{ user.email or '—' }}</td>
+        <td><span class="badge badge-{{ user.role }}">{{ user.role.upper() }}</span></td>
+        <td><span class="badge badge-{{ 'active' if user.is_active else 'inactive' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
+        <td>{{ user_scores[user.id] }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}</td>
+        <td style="color:#aaa;font-size:.8rem;">{{ user.last_login.strftime('%Y-%m-%d') if user.last_login else 'Never' }}</td>
+        <td>
+          <div class="actions">
+            {% if user.is_active %}
+            <button class="btn btn-warn" onclick="action('/admin/users/{{ user.id }}/deactivate','Deactivate {{ user.username }}?','row-{{ user.id }}')">Deactivate</button>
+            {% else %}
+            <button class="btn btn-success" onclick="action('/admin/users/{{ user.id }}/activate','Activate {{ user.username }}?','row-{{ user.id }}')">Activate</button>
+            {% endif %}
+            {% if user.role != 'admin' %}
+            <button class="btn btn-muted" onclick="action('/admin/users/{{ user.id }}/promote','Promote {{ user.username }} to admin?','row-{{ user.id }}')">Promote</button>
+            {% else %}
+            <button class="btn btn-muted" onclick="action('/admin/users/{{ user.id }}/demote','Demote {{ user.username }} from admin?','row-{{ user.id }}')">Demote</button>
+            {% endif %}
+            <button class="btn btn-danger" onclick="action('/admin/users/{{ user.id }}/delete','Delete {{ user.username }} permanently?','row-{{ user.id }}',true)">Delete</button>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;color:#666;padding:2rem;">No users found.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <p style="color:#aaa;font-size:.85rem;margin-top:1rem;">Showing {{ users|length }} user(s)</p>
+</div>
+<div id="toast"></div>
+<script>
+function action(url, confirmMsg, rowId, isDelete) {
+  if (!confirm(confirmMsg)) return;
+  fetch(url, {method:'POST'})
+    .then(r=>r.json())
+    .then(data=>{
+      if (data.success) {
+        showToast('Action completed successfully.');
+        if (isDelete) {
+          var row = document.getElementById(rowId);
+          if (row) row.remove();
+        } else {
+          setTimeout(()=>location.reload(), 800);
+        }
+      } else {
+        showToast(data.error || 'Action failed.', true);
+      }
+    }).catch(()=>showToast('Request failed.', true));
+}
+function showToast(msg, err) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = err ? '#C62828' : '#FF9900';
+  t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate of Completion | {{ cert.path.title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-light: #F0D060;
+            --dark: #0d1117;
+            --text: #1a1a2e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #f0ede8;
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem;
+        }
+
+        .action-bar {
+            width: 100%; max-width: 900px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .action-bar a { color: #666; text-decoration: none; font-size: 0.85rem; }
+        .action-bar a:hover { color: #333; }
+
+        .btn-group { display: flex; gap: 0.75rem; align-items: center; }
+
+        .btn-print, .btn-pdf {
+            border: none; padding: 0.7rem 1.4rem; border-radius: 10px;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; transition: opacity 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-print { background: #1a1a2e; color: #D4AF37; }
+        .btn-pdf   { background: #D4AF37; color: #000; }
+        .btn-print:hover, .btn-pdf:hover { opacity: 0.85; }
+
+        .name-form {
+            width: 100%; max-width: 900px;
+            background: #fff; border-radius: 12px;
+            padding: 1rem 1.5rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 1rem;
+            border: 1px solid #e5e7eb; font-size: 0.85rem;
+        }
+        .name-form label { color: #666; white-space: nowrap; }
+        .name-form input {
+            flex: 1; border: 1px solid #e5e7eb; border-radius: 8px;
+            padding: 0.5rem 0.9rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem;
+        }
+        .name-form button {
+            background: #111; color: #fff; border: none;
+            padding: 0.5rem 1rem; border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+        }
+
+        /* ── CERTIFICATE ── */
+        .certificate {
+            width: 900px; min-height: 636px;
+            background: #fdfaf5;
+            position: relative; overflow: hidden;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.25);
+            border-radius: 4px;
+        }
+
+        .cert-frame       { position: absolute; inset: 16px; border: 2px solid var(--gold); border-radius: 2px; pointer-events: none; z-index: 5; }
+        .cert-frame-inner { position: absolute; inset: 22px; border: 0.5px solid rgba(212,175,55,0.4); border-radius: 2px; pointer-events: none; z-index: 5; }
+
+        .corner { position: absolute; width: 60px; height: 60px; z-index: 6; }
+        .corner.tl { top: 16px; left: 16px; }
+        .corner.tr { top: 16px; right: 16px; transform: scaleX(-1); }
+        .corner.bl { bottom: 16px; left: 16px; transform: scaleY(-1); }
+        .corner.br { bottom: 16px; right: 16px; transform: scale(-1); }
+
+        .cert-watermark {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18rem; opacity: 0.025; z-index: 0;
+            pointer-events: none; color: #FF9900;
+        }
+
+        .cert-header {
+            position: relative; z-index: 2;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0d1117 100%);
+            padding: 2rem 3rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .cert-logo-text { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; }
+        .cert-logo-sub  { font-family: 'Space Grotesk', sans-serif; font-size: 0.65rem; color: rgba(255,255,255,0.4); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.25rem; }
+
+        .cert-badge-circle {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: conic-gradient(var(--gold) 0%, var(--gold-light) 30%, var(--gold) 60%, var(--gold-light) 80%, var(--gold) 100%);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.3), 0 0 30px rgba(212,175,55,0.2);
+        }
+        .cert-badge-inner { width: 58px; height: 58px; border-radius: 50%; background: #0d1117; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+
+        .cert-body { position: relative; z-index: 2; padding: 2.5rem 4rem; text-align: center; }
+        .cert-present { font-family: 'Crimson Text', serif; font-size: 1rem; color: #888; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .cert-of-completion {
+            font-family: 'Cinzel', serif; font-size: 2rem; color: var(--text); letter-spacing: 0.08em; margin-bottom: 1.5rem; position: relative;
+        }
+        .cert-of-completion::after { content: ''; display: block; width: 120px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 0.75rem auto 0; }
+        .cert-awarded-to { font-family: 'Crimson Text', serif; font-style: italic; font-size: 1rem; color: #999; margin-bottom: 0.5rem; }
+        .cert-name { font-family: 'Cinzel', serif; font-size: 2.4rem; font-weight: 700; color: var(--text); letter-spacing: 0.04em; margin-bottom: 1rem; line-height: 1.1; border-bottom: 1px solid rgba(212,175,55,0.4); padding-bottom: 1rem; }
+        .cert-desc { font-family: 'Crimson Text', serif; font-size: 1.05rem; color: #555; line-height: 1.6; max-width: 560px; margin: 0 auto 1.5rem; }
+        .cert-course { display: inline-block; background: linear-gradient(135deg, #1a1a2e, #0d1117); color: var(--gold); padding: 0.6rem 2rem; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 1rem; letter-spacing: 0.06em; margin-bottom: 2rem; }
+
+        .cert-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; padding: 0 4rem 2rem; position: relative; z-index: 2; align-items: end; }
+        .cert-footer-item { text-align: center; }
+        .sig-line { border-bottom: 1px solid #ccc; margin-bottom: 0.4rem; padding-bottom: 0.5rem; }
+        .sig-name { font-family: 'Crimson Text', serif; font-style: italic; font-size: 1rem; color: #333; margin-bottom: 0.2rem; }
+        .sig-title { font-size: 0.65rem; color: #888; letter-spacing: 0.1em; text-transform: uppercase; }
+        .cert-seal { display: flex; flex-direction: column; align-items: center; }
+        .seal-svg { width: 90px; height: 90px; }
+        .seal-label { font-size: 0.6rem; color: #888; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.25rem; }
+        .cert-code-block { font-family: 'Space Grotesk', monospace; font-size: 0.65rem; color: #bbb; letter-spacing: 0.15em; }
+        .cert-date { font-family: 'Crimson Text', serif; font-size: 1rem; color: #555; margin-bottom: 0.25rem; }
+        .gold-divider { height: 3px; background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent); margin: 0 3rem; position: relative; z-index: 2; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .action-bar, .name-form, .verify-note { display: none !important; }
+            .certificate { box-shadow: none; width: 100%; }
+            @page { size: landscape; margin: 0.5cm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar">
+        <a href="/my-certificates">← My Certificates</a>
+        <div class="btn-group">
+            <span style="font-size:0.8rem;color:#999">Code: <strong>{{ cert.cert_code }}</strong></span>
+            <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+            <button class="btn-pdf" onclick="downloadPDF()">⬇️ Download PDF</button>
+        </div>
+    </div>
+
+    <div class="name-form" id="nameForm">
+        <label>Your full name on certificate:</label>
+        <input type="text" id="nameInput" value="{{ cert.recipient_full_name }}" placeholder="Enter your full name">
+        <button onclick="updateName()">Update Name</button>
+        <span id="nameMsg" style="color:green;font-size:0.8rem"></span>
+    </div>
+
+    <!-- ── CERTIFICATE ── -->
+    <div class="certificate" id="certificate">
+        <div class="cert-frame"></div>
+        <div class="cert-frame-inner"></div>
+
+        <!-- Corner ornaments (static SVG, no trig) -->
+        <div class="corner tl"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 24 L6 24 L6 6 L24 6 L24 4 Z" fill="#D4AF37" opacity="0.8"/><path d="M4 4 L4 12" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><path d="M4 4 L12 4" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><circle cx="8" cy="8" r="3" fill="#D4AF37" opacity="0.6"/><circle cx="8" cy="8" r="1.5" fill="#F0D060" opacity="0.8"/></svg></div>
+        <div class="corner tr"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 24 L6 24 L6 6 L24 6 L24 4 Z" fill="#D4AF37" opacity="0.8"/><path d="M4 4 L4 12" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><path d="M4 4 L12 4" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><circle cx="8" cy="8" r="3" fill="#D4AF37" opacity="0.6"/><circle cx="8" cy="8" r="1.5" fill="#F0D060" opacity="0.8"/></svg></div>
+        <div class="corner bl"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 24 L6 24 L6 6 L24 6 L24 4 Z" fill="#D4AF37" opacity="0.8"/><path d="M4 4 L4 12" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><path d="M4 4 L12 4" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><circle cx="8" cy="8" r="3" fill="#D4AF37" opacity="0.6"/><circle cx="8" cy="8" r="1.5" fill="#F0D060" opacity="0.8"/></svg></div>
+        <div class="corner br"><svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L4 24 L6 24 L6 6 L24 6 L24 4 Z" fill="#D4AF37" opacity="0.8"/><path d="M4 4 L4 12" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><path d="M4 4 L12 4" stroke="#D4AF37" stroke-width="2" opacity="0.5"/><circle cx="8" cy="8" r="3" fill="#D4AF37" opacity="0.6"/><circle cx="8" cy="8" r="1.5" fill="#F0D060" opacity="0.8"/></svg></div>
+
+        <div class="cert-watermark">{{ cert.path.icon }}</div>
+
+        <div class="cert-header">
+            <div>
+                <div class="cert-logo-text">AWS Learning Platform</div>
+                <div class="cert-logo-sub">awslearningplatform.click</div>
+            </div>
+            <div class="cert-badge-circle">
+                <div class="cert-badge-inner">{{ cert.path.icon }}</div>
+            </div>
+        </div>
+
+        <div class="gold-divider"></div>
+
+        <div class="cert-body">
+            <div class="cert-present">This certificate is proudly presented to</div>
+            <div class="cert-of-completion">Certificate of Completion</div>
+            <div class="cert-awarded-to">awarded to</div>
+            <div class="cert-name" id="certName">{{ cert.recipient_full_name }}</div>
+            <p class="cert-desc">
+                for successfully completing all modules, demonstrating proficiency through
+                assessed practice examinations, and meeting the requirements of the
+            </p>
+            <div class="cert-course">{{ cert.path.title }}</div>
+        </div>
+
+        <div class="gold-divider"></div>
+
+        <div class="cert-footer">
+            <div class="cert-footer-item">
+                <div class="sig-line">
+                    <img src="data:image/png;base64,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" alt="Signature" style="height:60px;max-width:200px;object-fit:contain;filter:contrast(1.2);display:block;margin:0 auto 0.3rem;">
+                </div>
+                <div class="sig-name">DevonPatrick Adkins</div>
+                <div class="sig-title">Founder, AWS Learning Platform</div>
+            </div>
+
+            <div class="cert-footer-item center">
+                <div class="cert-seal">
+                    <!-- Seal with pre-computed starburst lines (no Jinja trig) -->
+                    <svg class="seal-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="46" fill="none" stroke="#D4AF37" stroke-width="1.5" opacity="0.5"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+                        <!-- 16 starburst lines at 22.5° intervals (pre-computed) -->
+                        <line x1="50" y1="50" x2="93" y2="50"  stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="89.7" y2="67.4" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="80.4" y2="80.4" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="67.4" y2="89.7" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="50"   y2="93"  stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="32.6" y2="89.7" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="19.6" y2="80.4" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="10.3" y2="67.4" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="7"    y2="50"  stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="10.3" y2="32.6" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="19.6" y2="19.6" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="32.6" y2="10.3" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="50"   y2="7"   stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="67.4" y2="10.3" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="80.4" y2="19.6" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="50" y1="50" x2="89.7" y2="32.6" stroke="#D4AF37" stroke-width="0.5" opacity="0.3"/>
+                        <!-- Inner filled circle -->
+                        <circle cx="50" cy="50" r="34" fill="#0d1117"/>
+                        <circle cx="50" cy="50" r="34" fill="none" stroke="#D4AF37" stroke-width="1"/>
+                        <text x="50" y="44" text-anchor="middle" font-size="14" fill="#D4AF37" font-family="serif">&#9729;</text>
+                        <text x="50" y="57" text-anchor="middle" font-size="7" fill="#D4AF37" letter-spacing="1" font-family="sans-serif">CERTIFIED</text>
+                        <text x="50" y="65" text-anchor="middle" font-size="5.5" fill="#888" letter-spacing="0.5" font-family="sans-serif">AWS LEARNING</text>
+                    </svg>
+                    <div class="seal-label">Official Seal</div>
+                </div>
+            </div>
+
+            <div class="cert-footer-item" style="text-align:right">
+                <div style="margin-bottom:0.75rem">
+                    <div class="cert-date">{{ cert.issued_at.strftime('%B %d, %Y') }}</div>
+                    <div class="sig-title">Date of Completion</div>
+                </div>
+                <div style="margin-bottom:0.5rem">
+                    <div class="cert-code-block">{{ cert.cert_code }}</div>
+                    <div class="sig-title">Verification Code</div>
+                </div>
+                <div>
+                    <div class="sig-title">Points Earned: <span style="color:#D4AF37">{{ cert.total_points }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="verify-note" style="margin-top:1.5rem;font-size:0.78rem;color:#888;text-align:center">
+        Verify this certificate at <strong>awslearningplatform.click/certificate/{{ cert.cert_code }}</strong>
+    </div>
+
+    <script>
+        function updateName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) return;
+            fetch('/certificate/{{ cert.cert_code }}/set-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name: name })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    document.getElementById('certName').textContent = name;
+                    document.getElementById('nameMsg').textContent = '✓ Updated';
+                    setTimeout(() => document.getElementById('nameMsg').textContent = '', 2000);
+                }
+            });
+        }
+
+        function downloadPDF() {
+            // Hide UI chrome, trigger print dialog (browser Save as PDF), restore
+            const actionBar = document.querySelector('.action-bar');
+            const nameForm  = document.querySelector('.name-form');
+            const verifyNote = document.querySelector('.verify-note');
+            actionBar.style.display  = 'none';
+            nameForm.style.display   = 'none';
+            verifyNote.style.display = 'none';
+            document.title = 'Certificate_{{ cert.cert_code }}';
+            window.print();
+            // Restore after dialog closes
+            setTimeout(() => {
+                actionBar.style.display  = '';
+                nameForm.style.display   = '';
+                verifyNote.style.display = '';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
