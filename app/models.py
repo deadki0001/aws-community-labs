@@ -152,8 +152,8 @@ def initialize_badges():
     """Seed badge definitions if not already present."""
     existing = {b.name for b in Badge.query.all()}
     badges = [
-        Badge(name='Cloud Warrior', description='Earned 10 or more points on challenges.',
-              icon='🛡️', trigger_condition='score>=10'),
+        Badge(name='Cloud Warrior', description='Earned 20 or more points on challenges.',
+              icon='🛡️', trigger_condition='score>=20'),
         Badge(name='Cloud Sorcerer', description='Earned 50 or more points on challenges.',
               icon='🌟', trigger_condition='score>=50'),
         Badge(name='First Steps', description='Completed your first challenge.',
@@ -180,7 +180,7 @@ def check_and_award_badges(user_id):
     newly_awarded = []
     challenge_count = Score.query.filter_by(user_id=user_id).count()
     # Award score-based badges
-    score_badges = [(10, 'Cloud Warrior'), (50, 'Cloud Sorcerer')]
+    score_badges = [(20, 'Cloud Warrior'), (50, 'Cloud Sorcerer')]
     for threshold, badge_name in score_badges:
         if total_score >= threshold:
             badge = Badge.query.filter_by(name=badge_name).first()

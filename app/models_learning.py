@@ -147,7 +147,7 @@ def seed_learning_paths():
         color_primary='#FF9900',
         color_secondary='#232F3E',
         total_points=500,
-        estimated_hours=40,
+        estimated_hours=20,
         difficulty='Beginner',
         cert_provider='AWS Learning Platform'
     )
@@ -165,50 +165,59 @@ def seed_learning_paths():
                 {
                     'title': 'What is Cloud Computing?',
                     'content': (
-                        '<p>Cloud computing delivers computing services-servers, storage, databases, networking, software-'
-                        'over the internet ("the cloud"). Instead of owning physical data centres, you rent access from '
-                        'a cloud provider and pay only for what you use.</p>'
-                        '<h4>Key Benefits</h4>'
+                        '<p>Cloud computing is the on-demand delivery of computing services - including servers, storage, databases, networking, software, analytics, and intelligence - over the internet. Rather than owning and maintaining physical data centres and servers, organisations rent access to these resources from a cloud provider and pay only for what they use. This model fundamentally changes how businesses think about and consume IT infrastructure.</p>'
+                        '<p>Before cloud computing, businesses had to forecast their infrastructure needs months or even years in advance. If they underestimated, they faced capacity shortages during peak periods. If they overestimated, they wasted capital on idle hardware. Cloud computing eliminates this guesswork entirely by allowing resources to be provisioned in minutes and released just as quickly.</p>'
+                        '<h4>The Six Key Benefits of Cloud Computing</h4>'
                         '<ul>'
-                        '<li><strong>Trade fixed expense for variable expense</strong> - pay only for what you consume.</li>'
-                        '<li><strong>Benefit from massive economies of scale</strong> - providers aggregate usage from '
-                        'hundreds of thousands of customers.</li>'
-                        '<li><strong>Stop guessing capacity</strong> - scale up or down within minutes.</li>'
-                        '<li><strong>Increase speed and agility</strong> - new resources available in seconds.</li>'
-                        '<li><strong>Go global in minutes</strong> - deploy in multiple regions around the world.</li>'
+                        '<li><strong>Trade fixed expense for variable expense</strong> - Instead of investing heavily in data centres and servers before you know how you will use them, you pay only when you consume computing resources and pay only for how much you consume. This shifts IT spending from capital expenditure (CapEx) to operational expenditure (OpEx).</li>'
+                        '<li><strong>Benefit from massive economies of scale</strong> - Cloud providers aggregate usage from hundreds of thousands of customers, achieving far greater economies of scale than any individual organisation could. These savings are passed on to customers in the form of lower variable costs.</li>'
+                        '<li><strong>Stop guessing capacity</strong> - Eliminate guessing about your infrastructure capacity needs. When you make a capacity decision prior to deploying an application, you often end up either sitting on expensive idle resources or dealing with limited capacity. With cloud computing you can scale up or down within minutes, accessing as much or as little capacity as you need.</li>'
+                        '<li><strong>Increase speed and agility</strong> - New IT resources are only a click away. The time to make resources available to developers goes from weeks to minutes. This dramatically increases agility for the organisation since the cost and time it takes to experiment and develop is significantly lower.</li>'
+                        '<li><strong>Stop spending money running and maintaining data centres</strong> - Focus on projects that differentiate your business rather than the undifferentiated heavy lifting of racking, stacking, and powering physical servers. Cloud computing lets you focus on your own customers rather than the physical infrastructure.</li>'
+                        '<li><strong>Go global in minutes</strong> - Easily deploy your application in multiple regions around the world with just a few clicks. This means you can provide lower latency and a better experience for your customers at minimal cost.</li>'
                         '</ul>'
                         '<h4>Cloud Deployment Models</h4>'
+                        '<p>There are three primary ways organisations deploy cloud resources, and understanding the differences is critical for the exam.</p>'
                         '<ul>'
-                        '<li><strong>Public Cloud</strong> - Resources owned and operated by a third-party provider, '
-                        'delivered over the internet (e.g., AWS, Azure, GCP).</li>'
-                        '<li><strong>Private Cloud</strong> - Cloud resources used exclusively by a single organisation, '
-                        'hosted on-premises or by a third party.</li>'
-                        '<li><strong>Hybrid Cloud</strong> - Combines public and private clouds, allowing data and '
-                        'applications to be shared between them.</li>'
+                        '<li><strong>Public Cloud</strong> - Resources are owned and operated by a third-party cloud provider and delivered over the internet. All hardware, software, and supporting infrastructure is owned and managed by the cloud provider. AWS, Microsoft Azure, and Google Cloud Platform (GCP) are public cloud providers. You share the underlying physical infrastructure with other customers but your data and workloads remain logically isolated.</li>'
+                        '<li><strong>Private Cloud</strong> - Cloud resources are used exclusively by a single organisation. A private cloud can be physically located at the organisation\'s on-site data centre or hosted by a third-party provider. The key distinction is that the services and infrastructure are always maintained on a private network and the hardware and software are dedicated solely to that organisation.</li>'
+                        '<li><strong>Hybrid Cloud</strong> - Hybrid clouds combine public and private clouds, bound together by technology that allows data and applications to be shared between them. This gives businesses greater flexibility, more deployment options, and allows them to optimise existing infrastructure, security, and compliance requirements. A common example is keeping sensitive customer data on a private cloud while running web-facing application tiers on the public cloud.</li>'
                         '</ul>'
+                        '<h4>Why AWS Leads the Cloud Market</h4>'
+                        '<p>Amazon Web Services launched in 2006 and has maintained its position as the largest cloud provider globally with over 30% market share. AWS offers more than 200 fully featured services from data centres globally. Millions of customers - including the fastest growing startups, largest enterprises, and leading government agencies - trust AWS to power their infrastructure, become more agile, and lower costs. For South African learners in particular, AWS certification represents one of the most in-demand and globally recognised credentials in the ICT industry.</p>'
                     ),
                     'order_index': 1,
                     'section_type': 'lesson'
                 },
                 {
-                    'title': 'AWS Global Infrastructure',
+                    'title': 'AWS Global Infrastructure & Service Models',
                     'content': (
-                        '<p>AWS operates a global infrastructure spanning <strong>Regions</strong>, '
-                        '<strong>Availability Zones (AZs)</strong>, and <strong>Edge Locations</strong>.</p>'
+                        '<p>AWS operates one of the most extensive and reliable global cloud infrastructures in the world. Understanding how this infrastructure is organised is foundational knowledge for the Cloud Practitioner exam and for making sound architectural decisions in real-world projects.</p>'
                         '<h4>Regions</h4>'
-                        '<p>A Region is a physical location in the world containing multiple, isolated data centres '
-                        'called Availability Zones. Each Region is completely independent. When selecting a Region '
-                        'consider: data governance/legal requirements, proximity to customers, service availability, '
-                        'and pricing.</p>'
-                        '<h4>Availability Zones</h4>'
-                        '<p>An AZ is one or more discrete data centres with redundant power, networking, and '
-                        'connectivity within a Region. AZs are physically separated-typically tens of miles apart-'
-                        'to protect against disasters, while remaining close enough for low-latency replication. '
-                        'Deploying across multiple AZs gives high availability.</p>'
-                        '<h4>Edge Locations</h4>'
-                        '<p>AWS CloudFront edge locations cache content closer to end users to reduce latency. '
-                        'There are many more edge locations than Regions. AWS Local Zones extend AWS infrastructure '
-                        'to more geographic locations for applications that require single-digit millisecond latency.</p>'
+                        '<p>An AWS Region is a physical location in the world where AWS clusters data centres. Each Region consists of a minimum of three, isolated, and physically separate Availability Zones within a geographic area. AWS currently operates over 30 geographic Regions worldwide, with ongoing expansion.</p>'
+                        '<p>When selecting a Region for your workloads, consider four key factors:</p>'
+                        '<ul>'
+                        '<li><strong>Data governance and legal requirements</strong> - Some countries require that certain types of data remain within their borders. For example, data subject to GDPR may need to remain within the European Union.</li>'
+                        '<li><strong>Proximity to customers</strong> - Deploying your application in the Region closest to your users reduces network latency and improves the user experience.</li>'
+                        '<li><strong>Service availability</strong> - Not all AWS services are available in every Region. New services typically launch in us-east-1 (Northern Virginia) first before expanding to other Regions.</li>'
+                        '<li><strong>Pricing</strong> - The cost of AWS services varies between Regions. us-east-1 is generally the most cost-effective Region due to economies of scale.</li>'
+                        '</ul>'
+                        '<h4>Availability Zones (AZs)</h4>'
+                        '<p>An Availability Zone is one or more discrete data centres with redundant power, networking, and connectivity within an AWS Region. AZs give customers the ability to operate production applications and databases that are more highly available, fault tolerant, and scalable than would be possible from a single data centre.</p>'
+                        '<p>Each AZ is physically separated from other AZs by a meaningful distance - typically tens of miles - but all AZs within a Region are interconnected with high-bandwidth, low-latency networking. This design means that a natural disaster, power outage, or other failure affecting one AZ is highly unlikely to affect other AZs in the same Region. Deploying applications across multiple AZs is one of the most fundamental best practices in AWS architecture.</p>'
+                        '<h4>Edge Locations and CloudFront</h4>'
+                        '<p>AWS CloudFront is a content delivery network (CDN) service that caches copies of your content at Edge Locations around the world. Edge Locations are data centre facilities that are separate from AWS Regions and exist solely to serve content to end users with the lowest possible latency. There are over 400 Edge Locations globally - significantly more than the number of Regions. When a user requests content, CloudFront routes the request to the Edge Location that provides the lowest latency, serving cached content directly from that edge point rather than fetching it from the origin server every time.</p>'
+                        '<h4>Cloud Service Models - IaaS, PaaS, and SaaS</h4>'
+                        '<p>Cloud services are broadly categorised into three models based on how much of the underlying stack the provider manages versus the customer.</p>'
+                        '<ul>'
+                        '<li><strong>Infrastructure as a Service (IaaS)</strong> - The cloud provider manages the physical hardware, hypervisor, and networking. You manage everything from the operating system upward - including the OS itself, middleware, runtime, data, and applications. IaaS gives you the most control and flexibility. Example: Amazon EC2. You choose the instance type, install your own OS, configure security, and manage patching.</li>'
+                        '<li><strong>Platform as a Service (PaaS)</strong> - The cloud provider manages the infrastructure AND the underlying platform components including the OS, middleware, and runtime. You focus only on deploying and managing your applications and data. This accelerates development since you do not need to manage servers. Example: AWS Elastic Beanstalk automatically handles deployment, capacity provisioning, load balancing, and auto-scaling for your application code.</li>'
+                        '<li><strong>Software as a Service (SaaS)</strong> - The cloud provider manages everything. You simply use the software through a web browser or API. The provider handles infrastructure, OS, middleware, and the application itself. Example: Gmail, Salesforce, Amazon WorkMail. There is nothing to install or manage - you just log in and use the service.</li>'
+                        '</ul>'
+                        '<h4>The AWS Shared Responsibility Model</h4>'
+                        '<p>The Shared Responsibility Model is one of the most tested concepts in the Cloud Practitioner exam. It defines who is responsible for security and compliance in the AWS environment.</p>'
+                        '<p><strong>AWS is responsible for security "OF" the cloud</strong> - this includes the physical security of data centres, the hardware, the global network infrastructure, and the managed services layer. AWS protects the infrastructure that runs all of the services offered in the AWS Cloud.</p>'
+                        '<p><strong>You are responsible for security "IN" the cloud</strong> - this includes your data, identity and access management (IAM configurations), operating system patches on EC2 instances, network and firewall configuration within your VPC, and client-side and server-side encryption of your data. The amount of responsibility you retain depends on which AWS service you use. For EC2 (IaaS), you manage the OS and above. For Lambda (PaaS), AWS manages the runtime and you manage only your code and data.</p>'
                     ),
                     'order_index': 2,
                     'section_type': 'lesson'
@@ -234,6 +243,23 @@ def seed_learning_paths():
                     ),
                     'order_index': 3,
                     'section_type': 'lesson'
+                },
+                {
+                    'title': 'Full Course Video - Andrew Brown (14 Hours)',
+                    'content': (
+                        '<p>This free 14-hour course by Andrew Brown of ExamPro covers the full AWS Certified Cloud Practitioner syllabus. It is one of the most comprehensive and highly rated free study resources available. Watch it alongside the reading material in this path to build a complete understanding before attempting the exam.</p>'
+                        '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin:1.5rem 0;">'
+                        '<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;border-radius:12px;" '
+                        'src="https://www.youtube.com/embed/7HKot-brXFE" '
+                        'title="AWS Certified Cloud Practitioner - Full Course by Andrew Brown" '
+                        'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" '
+                        'allowfullscreen></iframe>'
+                        '</div>'
+                        '<p style="margin-top:1rem;"><strong>Duration:</strong> 14 hours | <strong>Instructor:</strong> Andrew Brown, ExamPro | <strong>Level:</strong> Beginner</p>'
+                        '<p>Use the YouTube chapters to navigate directly to specific topics as you work through each module in this learning path. After completing the video, return here and take each module quiz to test your understanding.</p>'
+                    ),
+                    'order_index': 4,
+                    'section_type': 'video'
                 }
             ],
             'questions': [
@@ -1512,10 +1538,10 @@ def seed_aws_associate_paths():
                          'correct_answer': 'C', 'explanation': 'Dead-letter queues (DLQ) capture messages that have exceeded the maximum receive count, preventing them from blocking the main queue.'},
                         {'question_text': 'Which Auto Scaling policy maintains a specific metric at a target value, such as keeping average CPU utilisation at 50%?',
                          'option_a': 'Step Scaling', 'option_b': 'Scheduled Scaling', 'option_c': 'Simple Scaling', 'option_d': 'Target Tracking Scaling',
-                         'correct_answer': 'D', 'explanation': 'Target Tracking Scaling automatically adjusts capacity to keep a chosen metric at a target value — no need to define scale-in/scale-out steps.'},
+                         'correct_answer': 'D', 'explanation': 'Target Tracking Scaling automatically adjusts capacity to keep a chosen metric at a target value - no need to define scale-in/scale-out steps.'},
                         {'question_text': 'Multi-AZ RDS provides which primary benefit?',
                          'option_a': 'Read performance improvement', 'option_b': 'Automatic failover for high availability', 'option_c': 'Lower storage costs', 'option_d': 'Cross-region replication',
-                         'correct_answer': 'B', 'explanation': 'Multi-AZ RDS provisions a synchronous standby replica in a different AZ. On failure, RDS automatically fails over to the standby with minimal downtime. It does NOT improve read performance -- use Read Replicas for that.'},
+                         'correct_answer': 'B', 'explanation': 'Multi-AZ RDS provisions a synchronous standby replica in a different AZ. On failure, RDS automatically fails over to the standby with minimal downtime. It does NOT improve read performance - use Read Replicas for that.'},
                         {'question_text': 'Which SQS queue type guarantees exactly-once message delivery and strict ordering?',
                          'option_a': 'Standard Queue', 'option_b': 'Dead-Letter Queue', 'option_c': 'FIFO Queue', 'option_d': 'Priority Queue',
                          'correct_answer': 'C', 'explanation': 'FIFO (First-In-First-Out) queues guarantee exactly-once processing and strict ordering. Standard queues offer best-effort ordering and at-least-once delivery with higher throughput.'},
@@ -1540,10 +1566,10 @@ def seed_aws_associate_paths():
                         {'question_text': 'A security group and a Network ACL both protect VPC resources. What is the key difference?',
                          'option_a': 'Security groups are stateless; NACLs are stateful', 'option_b': 'Security groups are stateful; NACLs are stateless',
                          'option_c': 'Both are stateless', 'option_d': 'Both are stateful',
-                         'correct_answer': 'B', 'explanation': 'Security groups are stateful -- if inbound traffic is allowed, the return traffic is automatically allowed. NACLs are stateless -- you must explicitly allow both inbound and outbound traffic.'},
+                         'correct_answer': 'B', 'explanation': 'Security groups are stateful - if inbound traffic is allowed, the return traffic is automatically allowed. NACLs are stateless - you must explicitly allow both inbound and outbound traffic.'},
                         {'question_text': 'Which CloudFront feature restricts S3 bucket access so only CloudFront can serve the content?',
                          'option_a': 'Lambda@Edge', 'option_b': 'Signed URLs', 'option_c': 'Origin Access Control (OAC)', 'option_d': 'WAF integration',
-                         'correct_answer': 'C', 'explanation': 'Origin Access Control (OAC) -- the successor to Origin Access Identity -- restricts your S3 bucket so it only accepts requests from your CloudFront distribution, preventing direct S3 access.'},
+                         'correct_answer': 'C', 'explanation': 'Origin Access Control (OAC) - the successor to Origin Access Identity - restricts your S3 bucket so it only accepts requests from your CloudFront distribution, preventing direct S3 access.'},
                         {'question_text': 'Private subnets in a VPC need internet access for updates. What AWS resource provides this without exposing instances to inbound internet traffic?',
                          'option_a': 'Internet Gateway', 'option_b': 'NAT Gateway', 'option_c': 'VPC Peering', 'option_d': 'Transit Gateway',
                          'correct_answer': 'B', 'explanation': 'A NAT Gateway allows instances in private subnets to initiate outbound internet connections (for updates, patches, API calls) while blocking unsolicited inbound connections from the internet.'},
@@ -1576,7 +1602,7 @@ def seed_aws_associate_paths():
                          'correct_answer': 'C', 'explanation': 'Spot Instances use spare EC2 capacity at up to 90% discount. AWS can reclaim them with a 2-minute warning, making them ideal for fault-tolerant workloads like batch jobs, data analysis, and CI/CD.'},
                         {'question_text': 'DynamoDB DAX provides which performance improvement?',
                          'option_a': 'Millisecond write latency', 'option_b': 'Multi-region replication', 'option_c': 'Microsecond read latency', 'option_d': 'Automated backups',
-                         'correct_answer': 'C', 'explanation': 'DynamoDB Accelerator (DAX) is an in-memory cache that delivers microsecond read performance for DynamoDB. It is fully compatible with existing DynamoDB API calls -- no application code changes required.'},
+                         'correct_answer': 'C', 'explanation': 'DynamoDB Accelerator (DAX) is an in-memory cache that delivers microsecond read performance for DynamoDB. It is fully compatible with existing DynamoDB API calls - no application code changes required.'},
                         {'question_text': 'An S3 Lifecycle policy is configured to transition objects to Glacier after 90 days. What does this mean for objects accessed on day 91?',
                          'option_a': 'They are deleted', 'option_b': 'They are retrieved in milliseconds at no extra charge', 'option_c': 'They may take minutes to hours to retrieve and incur retrieval fees', 'option_d': 'They are automatically moved back to Standard',
                          'correct_answer': 'C', 'explanation': 'S3 Glacier Flexible Retrieval has retrieval times of minutes (Expedited) to hours (Standard, Bulk) and charges retrieval fees. For millisecond access to archived objects, use S3 Glacier Instant Retrieval instead.'},
@@ -1669,10 +1695,10 @@ def seed_aws_associate_paths():
                     'questions': [
                         {'question_text': 'Amazon Cognito User Pools primarily provide which capability?',
                          'option_a': 'Temporary AWS credentials for mobile users', 'option_b': 'User authentication with JWT tokens', 'option_c': 'VPC access for mobile applications', 'option_d': 'S3 presigned URL generation',
-                         'correct_answer': 'B', 'explanation': 'Cognito User Pools handle user authentication -- sign-up, sign-in, MFA, forgot password -- and issue JWT tokens (ID token, access token, refresh token). Identity Pools then exchange these tokens for temporary AWS credentials.'},
+                         'correct_answer': 'B', 'explanation': 'Cognito User Pools handle user authentication - sign-up, sign-in, MFA, forgot password - and issue JWT tokens (ID token, access token, refresh token). Identity Pools then exchange these tokens for temporary AWS credentials.'},
                         {'question_text': 'What is the key advantage of AWS Secrets Manager over SSM Parameter Store SecureString?',
                          'option_a': 'Lower cost per secret', 'option_b': 'Larger parameter values', 'option_c': 'Automatic secret rotation', 'option_d': 'Cross-region replication',
-                         'correct_answer': 'C', 'explanation': 'Secrets Manager supports automatic rotation of secrets using Lambda functions, natively integrated with RDS, Redshift, and DocumentDB. SSM Parameter Store does not support automatic rotation -- you must implement rotation manually.'},
+                         'correct_answer': 'C', 'explanation': 'Secrets Manager supports automatic rotation of secrets using Lambda functions, natively integrated with RDS, Redshift, and DocumentDB. SSM Parameter Store does not support automatic rotation - you must implement rotation manually.'},
                         {'question_text': 'In AWS X-Ray, what does a Segment represent?',
                          'option_a': 'A single HTTP request from end to end', 'option_b': 'Work done by a single service or application', 'option_c': 'A sampled subset of all traces', 'option_d': 'A timing entry for an AWS SDK call',
                          'correct_answer': 'B', 'explanation': 'An X-Ray Segment represents work done by a single service. A Trace is the complete end-to-end request. Subsegments provide detail within a segment for downstream calls, SQL queries, and SDK calls.'},
@@ -1702,10 +1728,10 @@ def seed_aws_associate_paths():
                     'order_index': 1, 'points': 75, 'icon': '📊',
                     'sections': [
                         {'title': 'CloudWatch Monitoring',
-                         'content': '<h4>CloudWatch Metrics</h4><p>CloudWatch collects metrics from AWS services automatically. EC2 default metrics: CPUUtilization, NetworkIn/Out, DiskReadOps/WriteOps. Detailed monitoring (1-minute intervals, additional cost) vs basic monitoring (5-minute intervals, free). Custom metrics via PutMetricData API -- standard resolution (1-minute) or high resolution (1-second). Namespaces organise metrics by service.</p><h4>CloudWatch Alarms</h4><p>Alarms monitor a metric over a specified period and trigger actions when a threshold is breached. States: OK, ALARM, INSUFFICIENT_DATA. Actions: SNS notification, EC2 action (stop/terminate/reboot/recover), Auto Scaling policy. Composite alarms combine multiple alarms with AND/OR logic. Alarm math uses metric math expressions.</p><h4>CloudWatch Logs</h4><p>Centralised log management with retention policies (1 day to never expire). Log groups contain log streams. Subscription filters stream logs to Kinesis, Lambda, or OpenSearch in real time. Logs Insights for interactive queries. Export to S3 for long-term archival.</p>',
+                         'content': '<h4>CloudWatch Metrics</h4><p>CloudWatch collects metrics from AWS services automatically. EC2 default metrics: CPUUtilization, NetworkIn/Out, DiskReadOps/WriteOps. Detailed monitoring (1-minute intervals, additional cost) vs basic monitoring (5-minute intervals, free). Custom metrics via PutMetricData API - standard resolution (1-minute) or high resolution (1-second). Namespaces organise metrics by service.</p><h4>CloudWatch Alarms</h4><p>Alarms monitor a metric over a specified period and trigger actions when a threshold is breached. States: OK, ALARM, INSUFFICIENT_DATA. Actions: SNS notification, EC2 action (stop/terminate/reboot/recover), Auto Scaling policy. Composite alarms combine multiple alarms with AND/OR logic. Alarm math uses metric math expressions.</p><h4>CloudWatch Logs</h4><p>Centralised log management with retention policies (1 day to never expire). Log groups contain log streams. Subscription filters stream logs to Kinesis, Lambda, or OpenSearch in real time. Logs Insights for interactive queries. Export to S3 for long-term archival.</p>',
                          'order_index': 1, 'section_type': 'lesson'},
                         {'title': 'CloudTrail, Config, and Systems Manager',
-                         'content': '<h4>AWS CloudTrail</h4><p>Records API calls made to your AWS account -- who did what, from where, and when. Management events (control plane -- CreateBucket, RunInstances) are logged by default. Data events (S3 object-level, Lambda invocations) must be explicitly enabled. CloudTrail Lake stores events for querying. Enable in all regions and enable log file integrity validation for compliance.</p><h4>AWS Config</h4><p>Continuous assessment of resource configurations against desired state. Config Rules evaluate resources (AWS managed rules or custom Lambda rules). Conformance Packs group multiple rules and remediation actions. Remediation Actions automatically fix non-compliant resources (e.g. enable encryption, attach IAM policies). Config integrates with Systems Manager Automation for auto-remediation.</p><h4>AWS Systems Manager (SSM)</h4><p>Operational hub for managing EC2 and on-premises servers. Key features: Session Manager (SSH replacement, no open port 22 required), Patch Manager (automated patching with patch baselines), Parameter Store, Automation (runbooks for common tasks), Run Command (execute scripts at scale without SSH), Inventory (collect software/configuration data).</p>',
+                         'content': '<h4>AWS CloudTrail</h4><p>Records API calls made to your AWS account - who did what, from where, and when. Management events (control plane - CreateBucket, RunInstances) are logged by default. Data events (S3 object-level, Lambda invocations) must be explicitly enabled. CloudTrail Lake stores events for querying. Enable in all regions and enable log file integrity validation for compliance.</p><h4>AWS Config</h4><p>Continuous assessment of resource configurations against desired state. Config Rules evaluate resources (AWS managed rules or custom Lambda rules). Conformance Packs group multiple rules and remediation actions. Remediation Actions automatically fix non-compliant resources (e.g. enable encryption, attach IAM policies). Config integrates with Systems Manager Automation for auto-remediation.</p><h4>AWS Systems Manager (SSM)</h4><p>Operational hub for managing EC2 and on-premises servers. Key features: Session Manager (SSH replacement, no open port 22 required), Patch Manager (automated patching with patch baselines), Parameter Store, Automation (runbooks for common tasks), Run Command (execute scripts at scale without SSH), Inventory (collect software/configuration data).</p>',
                          'order_index': 2, 'section_type': 'lesson'},
                     ],
                     'questions': [
@@ -1714,7 +1740,7 @@ def seed_aws_associate_paths():
                          'correct_answer': 'B', 'explanation': 'EC2 basic monitoring (included free) sends metrics at 5-minute intervals. Detailed monitoring (additional cost) sends metrics at 1-minute intervals and is required when you need faster Auto Scaling responses.'},
                         {'question_text': 'AWS Config continuously monitors resource configurations. What does a Config Rule do?',
                          'option_a': 'Blocks non-compliant API calls in real time', 'option_b': 'Evaluates resource configurations against desired settings', 'option_c': 'Encrypts all configuration data', 'option_d': 'Creates backups of configuration changes',
-                         'correct_answer': 'B', 'explanation': 'Config Rules evaluate the configuration of AWS resources against a desired state. Non-compliant resources are flagged for review or automatic remediation. They do not block changes in real time -- use SCPs or IAM for preventive controls.'},
+                         'correct_answer': 'B', 'explanation': 'Config Rules evaluate the configuration of AWS resources against a desired state. Non-compliant resources are flagged for review or automatic remediation. They do not block changes in real time - use SCPs or IAM for preventive controls.'},
                         {'question_text': 'Which AWS Systems Manager feature replaces SSH and does not require port 22 to be open?',
                          'option_a': 'Run Command', 'option_b': 'Patch Manager', 'option_c': 'Session Manager', 'option_d': 'Parameter Store',
                          'correct_answer': 'C', 'explanation': 'Session Manager provides secure, audited, browser-based shell access to EC2 instances without requiring SSH keys, bastion hosts, or open inbound ports. All session activity is logged to CloudWatch and/or S3.'},
@@ -1735,7 +1761,7 @@ def seed_aws_associate_paths():
                          'content': '<h4>DR Strategies (fastest to slowest RTO/RPO)</h4><table><tr><th>Strategy</th><th>Description</th><th>Cost</th><th>RTO</th></tr><tr><td>Multi-Site Active-Active</td><td>Full production in multiple regions, simultaneous traffic</td><td>Highest</td><td>Near zero</td></tr><tr><td>Warm Standby</td><td>Scaled-down but functional copy in DR region</td><td>High</td><td>Minutes</td></tr><tr><td>Pilot Light</td><td>Core components running in DR, must scale out on failover</td><td>Medium</td><td>10s of minutes</td></tr><tr><td>Backup and Restore</td><td>Data backed up to S3/Glacier, restore from scratch on disaster</td><td>Lowest</td><td>Hours</td></tr></table><h4>Recovery Objectives</h4><ul><li><strong>RTO (Recovery Time Objective)</strong> - Maximum acceptable downtime after a disaster.</li><li><strong>RPO (Recovery Point Objective)</strong> - Maximum acceptable data loss measured in time.</li></ul>',
                          'order_index': 1, 'section_type': 'lesson'},
                         {'title': 'AWS Backup and Data Protection',
-                         'content': '<h4>AWS Backup</h4><p>Centralised backup service for EC2, EBS, RDS, Aurora, DynamoDB, EFS, FSx, and S3. Backup Plans define schedule and retention. Backup Vaults store recovery points with resource-based access policies. Cross-region and cross-account backup for disaster recovery. Vault Lock (WORM - Write Once Read Many) prevents backup deletion for compliance.</p><h4>EBS Snapshots and AMIs</h4><p>EBS Snapshots are incremental backups stored in S3. First snapshot is full; subsequent snapshots store only changed blocks. Copy snapshots across regions for DR. Create AMIs from running instances for golden image management. Amazon Data Lifecycle Manager (DLM) automates snapshot and AMI creation and deletion policies.</p><h4>RDS Automated Backups and Snapshots</h4><p>RDS automated backups: retention 1-35 days, point-in-time recovery to any second within retention period. Manual DB snapshots: retained indefinitely until explicitly deleted. Restore always creates a new DB instance -- you cannot restore to an existing instance. Cross-region read replica promotion for DR.</p>',
+                         'content': '<h4>AWS Backup</h4><p>Centralised backup service for EC2, EBS, RDS, Aurora, DynamoDB, EFS, FSx, and S3. Backup Plans define schedule and retention. Backup Vaults store recovery points with resource-based access policies. Cross-region and cross-account backup for disaster recovery. Vault Lock (WORM - Write Once Read Many) prevents backup deletion for compliance.</p><h4>EBS Snapshots and AMIs</h4><p>EBS Snapshots are incremental backups stored in S3. First snapshot is full; subsequent snapshots store only changed blocks. Copy snapshots across regions for DR. Create AMIs from running instances for golden image management. Amazon Data Lifecycle Manager (DLM) automates snapshot and AMI creation and deletion policies.</p><h4>RDS Automated Backups and Snapshots</h4><p>RDS automated backups: retention 1-35 days, point-in-time recovery to any second within retention period. Manual DB snapshots: retained indefinitely until explicitly deleted. Restore always creates a new DB instance - you cannot restore to an existing instance. Cross-region read replica promotion for DR.</p>',
                          'order_index': 2, 'section_type': 'lesson'},
                     ],
                     'questions': [
@@ -1747,13 +1773,13 @@ def seed_aws_associate_paths():
                          'correct_answer': 'B', 'explanation': 'RPO (Recovery Point Objective) defines how much data loss is acceptable, measured in time. An RPO of 1 hour means your backup strategy must ensure data can be recovered to a point no more than 1 hour before the disaster.'},
                         {'question_text': 'EBS Snapshots are stored in which AWS service?',
                          'option_a': 'EFS', 'option_b': 'Glacier', 'option_c': 'S3', 'option_d': 'EBS itself',
-                         'correct_answer': 'C', 'explanation': 'EBS Snapshots are stored in Amazon S3 (managed by AWS, not visible in your S3 console). Snapshots are incremental -- only blocks changed since the last snapshot are saved, reducing storage costs and backup time.'},
+                         'correct_answer': 'C', 'explanation': 'EBS Snapshots are stored in Amazon S3 (managed by AWS, not visible in your S3 console). Snapshots are incremental - only blocks changed since the last snapshot are saved, reducing storage costs and backup time.'},
                         {'question_text': 'When restoring an RDS database from a snapshot, what is created?',
                          'option_a': 'The original DB instance is overwritten', 'option_b': 'A new DB instance with a new endpoint', 'option_c': 'A Read Replica of the original instance', 'option_d': 'An in-place restore with the same endpoint',
                          'correct_answer': 'B', 'explanation': 'RDS restore always creates a NEW DB instance with a new endpoint. You cannot restore to the same instance. After restoring, you must update your application connection strings to point to the new endpoint.'},
                         {'question_text': 'Which AWS Backup feature prevents backup deletion for a defined retention period to meet compliance requirements?',
                          'option_a': 'Backup Vault', 'option_b': 'Backup Plan', 'option_c': 'Vault Lock (WORM)', 'option_d': 'Cross-account backup',
-                         'correct_answer': 'C', 'explanation': 'AWS Backup Vault Lock implements WORM (Write Once, Read Many) protection. Once enabled, no one -- including the root account -- can delete recovery points within the lock period, meeting SEC, FINRA, and CFTC compliance requirements.'},
+                         'correct_answer': 'C', 'explanation': 'AWS Backup Vault Lock implements WORM (Write Once, Read Many) protection. Once enabled, no one - including the root account - can delete recovery points within the lock period, meeting SEC, FINRA, and CFTC compliance requirements.'},
                     ]
                 },
                 {
@@ -1762,7 +1788,7 @@ def seed_aws_associate_paths():
                     'order_index': 3, 'points': 75, 'icon': '💰',
                     'sections': [
                         {'title': 'Security Services for SysOps',
-                         'content': '<h4>Amazon GuardDuty</h4><p>Intelligent threat detection service that analyses CloudTrail logs, VPC Flow Logs, and DNS logs to identify threats. Detects: account compromise (unusual API calls, impossible travel), instance compromise (crypto mining, C&C traffic), bucket compromise (unusual S3 data access patterns). Findings are prioritised by severity. Integrates with Security Hub and EventBridge for automated response.</p><h4>AWS Security Hub</h4><p>Centralised security posture management. Aggregates findings from GuardDuty, Inspector, Macie, IAM Access Analyser, Firewall Manager, and third-party tools. Security standards checks: CIS AWS Foundations Benchmark, AWS Foundational Security Best Practices, PCI DSS. Security score tracks overall compliance posture.</p><h4>IAM Advanced</h4><p>IAM Access Analyser identifies resources shared outside your organisation. Service Control Policies (SCPs) in AWS Organisations set maximum permissions across accounts (do not grant permissions -- only restrict). Permission Boundaries set maximum permissions for IAM entities. IAM roles are preferred over long-term access keys. Enable MFA for root and all IAM users.</p>',
+                         'content': '<h4>Amazon GuardDuty</h4><p>Intelligent threat detection service that analyses CloudTrail logs, VPC Flow Logs, and DNS logs to identify threats. Detects: account compromise (unusual API calls, impossible travel), instance compromise (crypto mining, C&C traffic), bucket compromise (unusual S3 data access patterns). Findings are prioritised by severity. Integrates with Security Hub and EventBridge for automated response.</p><h4>AWS Security Hub</h4><p>Centralised security posture management. Aggregates findings from GuardDuty, Inspector, Macie, IAM Access Analyser, Firewall Manager, and third-party tools. Security standards checks: CIS AWS Foundations Benchmark, AWS Foundational Security Best Practices, PCI DSS. Security score tracks overall compliance posture.</p><h4>IAM Advanced</h4><p>IAM Access Analyser identifies resources shared outside your organisation. Service Control Policies (SCPs) in AWS Organisations set maximum permissions across accounts (do not grant permissions - only restrict). Permission Boundaries set maximum permissions for IAM entities. IAM roles are preferred over long-term access keys. Enable MFA for root and all IAM users.</p>',
                          'order_index': 1, 'section_type': 'lesson'},
                         {'title': 'Cost Management and Optimisation',
                          'content': '<h4>AWS Cost Explorer</h4><p>Visualise, understand, and manage AWS costs and usage. Filter by service, region, account, tag, and usage type. Rightsizing recommendations identify over-provisioned EC2 and RDS instances. Cost anomaly detection uses ML to identify unusual spending patterns and alerts via SNS.</p><h4>AWS Budgets</h4><p>Set custom cost and usage budgets with alerts when thresholds are exceeded or forecasted to be exceeded. Budget types: Cost Budget, Usage Budget, RI Utilisation/Coverage Budget, Savings Plan Utilisation/Coverage Budget. Budget Actions automatically apply IAM policies or SCPs when budgets are exceeded.</p><h4>AWS Trusted Advisor</h4><p>Real-time guidance across five categories: Cost Optimisation (idle resources, underutilised EBS volumes), Performance (high-utilisation EC2, CloudFront optimisations), Security (open security groups, MFA on root, S3 bucket permissions), Fault Tolerance (EBS snapshots, RDS Multi-AZ), Service Limits (approaching service quotas). Business and Enterprise support plans unlock all checks.</p>',

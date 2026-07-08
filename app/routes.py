@@ -242,10 +242,20 @@ def validate_command():
                 'Create an IAM User': 'https://docs.aws.amazon.com/cli/latest/reference/iam/create-user.html',
                 'Launch an EC2 instance': 'https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html',
             }
-            return jsonify({'message': (
-                f"❌ Incorrect command for '{challenge.name}'.\n"
-                f"📖 Docs: {links.get(challenge.name, 'https://aws.amazon.com/cli/')}"
-            )})
+            videos = {
+                'Create a VPC': 'https://www.youtube.com/watch?v=ctwO-CMGkxg',
+                'Create an S3 Bucket': 'https://www.youtube.com/watch?v=RODg8GWKU2Q',
+                'Create an RDS Instance': 'https://www.youtube.com/watch?v=QtouOs4tzNk',
+                'Create a Security Group': 'https://www.youtube.com/watch?v=gBDK4Pa_BRY',
+                'Create an IAM User': 'https://www.youtube.com/watch?v=ZQMpSICUEcw',
+                'Launch an EC2 instance': 'https://www.youtube.com/watch?v=crNyDkR3ulU',
+            }
+            doc_link = links.get(challenge.name, 'https://aws.amazon.com/cli/')
+            vid_link = videos.get(challenge.name)
+            msg = f"❌ Incorrect command for '{challenge.name}'.\n📖 Docs: {doc_link}"
+            if vid_link:
+                msg += f"\n🎥 Video: {vid_link}"
+            return jsonify({'message': msg})
     except Exception as e:
         return jsonify({'message': f'❌ An error occurred: {str(e)}'}), 500
 
