@@ -13,6 +13,7 @@ from sqlalchemy import func
 from werkzeug.security import generate_password_hash
 
 from app import db, mail
+from app.models import now_sast
 from app.models import User, Challenge, Score, check_and_award_badges
 from app.validation import validate_username, validate_email, validate_password, sanitise_cli_input
 from app.email_utils import send_welcome_email
@@ -64,7 +65,7 @@ def login():
         session['user_id'] = user.id
         session['role'] = user.role
         session.permanent = True
-        user.last_login = datetime.utcnow()
+        user.last_login = now_sast()
         db.session.commit()
         if user.role == 'admin':
             return redirect(url_for('admin.dashboard'))
@@ -117,7 +118,7 @@ def signup():
             session['user_id'] = new_user.id
             session['role'] = 'user'
             session.permanent = True
-            new_user.last_login = datetime.utcnow()
+            new_user.last_login = now_sast()
             db.session.commit()
             # Send welcome email - non-blocking, does not affect registration on failure
             if new_user.email:

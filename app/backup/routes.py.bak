@@ -1,21 +1,15 @@
 import os
 import shutil
 import sqlite3
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from app import db
-from app.models import BackupLog, AuditLog, User
+from app.models import BackupLog, AuditLog, User, now_sast
 from app.decorators import admin_required
 
 backup_bp = Blueprint('backup', __name__, url_prefix='/backup')
 
 BACKUP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'backups')
-
-_SAST = timezone(timedelta(hours=2))
-
-
-def now_sast():
-    return datetime.now(_SAST).replace(tzinfo=None)
 
 
 def _get_db_path():
@@ -27,6 +21,7 @@ def _ensure_backup_dir():
 
 
 def _validate_backup_file(backup_path, live_db_path):
+    """Open backup as SQLite and compare record counts. Returns (status, error_message)."""
     try:
         backup_conn = sqlite3.connect(backup_path)
         live_conn = sqlite3.connect(live_db_path)
@@ -40,7 +35,7 @@ def _validate_backup_file(backup_path, live_db_path):
                     live_conn.close()
                     return 'fail', f'Record count mismatch in {table}: backup={b_count} live={l_count}'
             except sqlite3.OperationalError:
-                pass
+                pass  # table may not exist in backup - skip
         backup_conn.close()
         live_conn.close()
         return 'pass', None
@@ -49,6 +44,7 @@ def _validate_backup_file(backup_path, live_db_path):
 
 
 def run_backup(backup_type='automated', user_id=None):
+    """Core backup function - used by both manual trigger and APScheduler."""
     with current_app.app_context():
         _ensure_backup_dir()
         db_path = _get_db_path()
@@ -72,20 +68,12 @@ def run_backup(backup_type='automated', user_id=None):
             )
             db.session.add(log)
             db.session.commit()
-            db.session.refresh(log)
-            result = type('BackupResult', (), {
-                'id': log.id,
-                'validation_status': log.validation_status,
-                'file_path': log.file_path,
-                'file_size': log.file_size,
-                'error_message': log.error_message
-            })()
-            print(f"[Backup] {backup_type} backup {result.validation_status}: {result.file_path}")
-            return result
+            print(f"[Backup] {backup_type} backup {status}: {backup_path}")
+            return log
         except Exception as e:
             log = BackupLog(
                 backup_type=backup_type,
-                file_path=backup_path if 'backup_path' in locals() else 'unknown',
+                file_path=backup_path if 'backup_path' in dir() else 'unknown',
                 validation_status='fail',
                 created_at=now_sast(),
                 created_by=user_id,
@@ -93,37 +81,30 @@ def run_backup(backup_type='automated', user_id=None):
             )
             db.session.add(log)
             db.session.commit()
-            db.session.refresh(log)
-            result = type('BackupResult', (), {
-                'id': log.id,
-                'validation_status': 'fail',
-                'file_path': log.file_path,
-                'file_size': None,
-                'error_message': str(e)
-            })()
-            return result
+            return log
 
 
+# ── Panel ─────────────────────────────────────────────────────────────────────
 @backup_bp.route('/')
 @admin_required
 def panel():
     admin_user = User.query.get(session['user_id'])
     backups = BackupLog.query.order_by(BackupLog.created_at.desc()).all()
+    # Schema drift check result (stored in session for display)
     drift_result = session.pop('drift_result', None)
     return render_template('backup/panel.html', backups=backups,
                            admin_user=admin_user, drift_result=drift_result)
 
 
+# ── Manual Backup ─────────────────────────────────────────────────────────────
 @backup_bp.route('/create', methods=['POST'])
 @admin_required
 def create_backup():
     log = run_backup(backup_type='manual', user_id=session['user_id'])
-    audit = AuditLog(
-        admin_id=session['user_id'],
-        action_type='BACKUP_TRIGGERED',
-        affected_record=f'backup_id:{log.id} status:{log.validation_status}',
-        timestamp=now_sast()
-    )
+    # Record in audit log
+    audit = AuditLog(admin_id=session['user_id'], action_type='BACKUP_TRIGGERED',
+                     affected_record=f'backup_id:{log.id} status:{log.validation_status}',
+                     timestamp=now_sast())
     db.session.add(audit)
     db.session.commit()
     return jsonify({
@@ -135,6 +116,7 @@ def create_backup():
     })
 
 
+# ── Validate existing backup ───────────────────────────────────────────────────
 @backup_bp.route('/validate/<int:backup_id>', methods=['POST'])
 @admin_required
 def validate_backup(backup_id):
@@ -149,6 +131,7 @@ def validate_backup(backup_id):
     return jsonify({'success': True, 'status': status, 'error': error_msg})
 
 
+# ── Restore ───────────────────────────────────────────────────────────────────
 @backup_bp.route('/restore/<int:backup_id>', methods=['POST'])
 @admin_required
 def restore_backup(backup_id):
@@ -158,34 +141,33 @@ def restore_backup(backup_id):
     if not os.path.exists(log.file_path):
         return jsonify({'error': 'Backup file not found on server.'}), 404
     db_path = _get_db_path()
-    log_file_path = log.file_path
-    log_created_at = log.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    # 1. Create safety snapshot
     safety_log = run_backup(backup_type='pre_restore_safety', user_id=session['user_id'])
-    safety_path = safety_log.file_path
     try:
-        shutil.copy2(log_file_path, db_path)
-        status, err = _validate_backup_file(db_path, log_file_path)
+        # 2. Replace live DB with backup
+        shutil.copy2(log.file_path, db_path)
+        # 3. Post-restore validation
+        status, err = _validate_backup_file(db_path, log.file_path)
         if status == 'pass':
-            audit = AuditLog(
-                admin_id=session['user_id'],
-                action_type='RESTORE_COMPLETED',
-                affected_record=f'backup_id:{backup_id}',
-                timestamp=now_sast()
-            )
+            audit = AuditLog(admin_id=session['user_id'], action_type='RESTORE_COMPLETED',
+                             affected_record=f'backup_id:{backup_id}', timestamp=now_sast())
             db.session.add(audit)
             db.session.commit()
-            return jsonify({'success': True, 'message': f'System restored to backup from {log_created_at} SAST.'})
+            return jsonify({'success': True, 'message': f'System restored to backup from {log.created_at.strftime("%Y-%m-%d %H:%M:%S")} UTC.'})
         else:
-            shutil.copy2(safety_path, db_path)
-            return jsonify({'error': f'Post-restore validation failed. System reverted. Error: {err}'}), 500
+            # Revert to safety snapshot
+            shutil.copy2(safety_log.file_path, db_path)
+            return jsonify({'error': f'Post-restore validation failed. System reverted to pre-restore state. Error: {err}'}), 500
     except Exception as e:
+        # Attempt revert
         try:
-            shutil.copy2(safety_path, db_path)
+            shutil.copy2(safety_log.file_path, db_path)
         except Exception:
             pass
         return jsonify({'error': f'Restore failed and system was reverted. Error: {str(e)}'}), 500
 
 
+# ── Drift Detection ───────────────────────────────────────────────────────────
 @backup_bp.route('/drift-check', methods=['POST'])
 @admin_required
 def drift_check():
@@ -215,12 +197,8 @@ def drift_check():
                 if col not in live_cols:
                     issues.append(f"Missing column: {table}.{col}")
         conn.close()
-        audit = AuditLog(
-            admin_id=session['user_id'],
-            action_type='DRIFT_CHECK',
-            affected_record=f'issues:{len(issues)}',
-            timestamp=now_sast()
-        )
+        audit = AuditLog(admin_id=session['user_id'], action_type='DRIFT_CHECK',
+                         affected_record=f'issues:{len(issues)}', timestamp=now_sast())
         db.session.add(audit)
         db.session.commit()
         if issues:

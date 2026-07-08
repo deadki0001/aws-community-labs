@@ -10,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.enums import TA_CENTER
 
 from app import db
+from app.models import now_sast
 from app.models import User, Score, BackupLog, AuditLog
 from app.decorators import admin_required
 
@@ -32,7 +33,7 @@ def _doc_header(elements, title):
                                spaceAfter=20)
     elements.append(Paragraph('AWS Community Labs - awslearningplatform.click', sub_style))
     elements.append(Paragraph(title, title_style))
-    elements.append(Paragraph(f'Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M")} UTC', sub_style))
+    elements.append(Paragraph(f'Generated: {now_sast().strftime("%Y-%m-%d %H:%M")} UTC', sub_style))
     elements.append(Spacer(1, 0.4 * cm))
 
 
@@ -98,7 +99,7 @@ def user_registration_report():
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True,
-                     download_name=f'user_report_{datetime.utcnow().strftime("%Y%m%d")}.pdf',
+                     download_name=f'user_report_{now_sast().strftime("%Y%m%d")}.pdf',
                      mimetype='application/pdf')
 
 
@@ -135,7 +136,7 @@ def system_activity_report():
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True,
-                     download_name=f'activity_report_{datetime.utcnow().strftime("%Y%m%d")}.pdf',
+                     download_name=f'activity_report_{now_sast().strftime("%Y%m%d")}.pdf',
                      mimetype='application/pdf')
 
 
@@ -184,5 +185,5 @@ def backup_integrity_report():
     doc.build(elements)
     buffer.seek(0)
     return send_file(buffer, as_attachment=True,
-                     download_name=f'backup_report_{datetime.utcnow().strftime("%Y%m%d")}.pdf',
+                     download_name=f'backup_report_{now_sast().strftime("%Y%m%d")}.pdf',
                      mimetype='application/pdf')

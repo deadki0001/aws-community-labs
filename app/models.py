@@ -1,4 +1,12 @@
 from datetime import datetime, timedelta
+from datetime import timezone as _tz
+
+_SAST = _tz(timedelta(hours=2))
+
+def now_sast():
+    """Return current datetime in South Africa Standard Time (UTC+2)."""
+    return datetime.now(_SAST).replace(tzinfo=None)
+
 from app import db
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,12 +34,12 @@ class User(db.Model):
 
     def set_reset_token(self, token):
         self.reset_token = token
-        self.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
+        self.reset_token_expiration = now_sast() + timedelta(hours=1)
 
     def is_reset_token_valid(self):
         return (
             self.reset_token_expiration is not None and
-            datetime.utcnow() < self.reset_token_expiration
+            now_sast() < self.reset_token_expiration
         )
 
     @classmethod

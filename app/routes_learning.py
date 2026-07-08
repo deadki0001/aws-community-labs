@@ -3,6 +3,7 @@ import string
 from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from app import db
+from app.models import now_sast
 from app.models import User
 from app.models_learning import (
     LearningPath, PathModule, ModuleSection, QuizQuestion,
@@ -141,7 +142,7 @@ def quiz_submit(slug, module_id):
     if passed and not mp.quiz_passed:
         mp.quiz_passed = True
         mp.completed = True
-        mp.completed_at = datetime.utcnow()
+        mp.completed_at = now_sast()
         mp.points_earned = module.points
         points_awarded = module.points
         pp = UserPathProgress.query.filter_by(user_id=user.id, path_id=path.id).first()
@@ -154,7 +155,7 @@ def quiz_submit(slug, module_id):
             for m in path.modules
         )
         if all_done and not pp.completed_at:
-            pp.completed_at = datetime.utcnow()
+            pp.completed_at = now_sast()
             _issue_certificate(user, path, pp)
     db.session.commit()
     return jsonify({'score': score_pct, 'correct': correct, 'total': total,
